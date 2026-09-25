@@ -25,7 +25,7 @@ extension SMFValidator {
         case invalidTrackCount(trackCount: Int,
                                format: SMFFormat)
 
-        /// This track has no terminal End-of-Track meta-event.
+        /// The track has no terminal End-of-Track meta-event.
         case missingEndOfTrack(trackIndex: Int)
 
         /// A meta-event in this track carries text with one or more characters
@@ -67,15 +67,15 @@ extension SMFValidator.Issue {
     /// for an issue that applies to the sequence as a whole.
     public var trackIndex: Int? {
         switch self {
-        case .invalidTrackCount:
-            nil
-
         case let .deltaTimeTooLarge(trackIndex),
              let .eventAfterEndOfTrack(trackIndex),
              let .eventDataTooLarge(trackIndex),
              let .missingEndOfTrack(trackIndex),
              let .unencodableText(trackIndex):
             trackIndex
+
+        case .invalidTrackCount:
+            nil
         }
     }
 }

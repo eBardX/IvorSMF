@@ -1,5 +1,7 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
+
 /// A musical key signature as stored in an SMF file.
 public enum SMFKeySignature {
 
@@ -94,22 +96,42 @@ public enum SMFKeySignature {
     case gSharpMinor
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - Equatable
 
-extension SMFKeySignature: BytesValueConvertible {
+extension SMFKeySignature: Equatable {
+}
 
-    // MARK: Internal Initializers
+// MARK: - Hashable
 
-    internal init?(bytesValue: [UInt8]) {
+extension SMFKeySignature: Hashable {
+}
+
+// MARK: - MIDIBytesConvertible
+
+extension SMFKeySignature: MIDIBytesConvertible {
+
+    // MARK: Public Initializers
+
+    /// Creates an `SMFKeySignature` instance from its SMF encoding, or `nil` if
+    /// the bytes do not encode a valid key signature.
+    ///
+    /// - Parameter bytesValue: Two bytes: the number of sharps (positive) or
+    ///                         flats (negative) in two’s complement, followed
+    ///                         by 0 for a major key or 1 for a minor key.
+    public init?(bytesValue: [UInt8]) {
         guard let keySignature = Self.keySignaturesByBytesValue[bytesValue]
         else { return nil }
 
         self = keySignature
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this key signature: two bytes holding the number of
+    /// sharps (positive) or flats (negative) in two’s complement, followed by 0
+    /// for a major key or 1 for a minor key. Never `nil`, because every key
+    /// signature can be encoded.
+    public var bytesValue: [UInt8]? {
         Self.bytesValuesByKeySignature[self]
     }
 
@@ -148,16 +170,6 @@ extension SMFKeySignature: BytesValueConvertible {
 
     private static let keySignaturesByBytesValue: [[UInt8]: SMFKeySignature] =
         Dictionary(uniqueKeysWithValues: bytesValuesByKeySignature.map { ($1, $0) })
-}
-
-// MARK: - Equatable
-
-extension SMFKeySignature: Equatable {
-}
-
-// MARK: - Hashable
-
-extension SMFKeySignature: Hashable {
 }
 
 // MARK: - Sendable

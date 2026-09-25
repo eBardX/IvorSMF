@@ -63,7 +63,7 @@ To add IvorSMF to a Swift package, add it to the `dependencies` in your
 ```swift
 dependencies: [
     .package(url: "https://github.com/eBardX/IvorSMF.git",
-             .upToNextMajor(from: "1.0.0"))
+             .upToNextMinor(from: "0.1.0"))
 ]
 ```
 

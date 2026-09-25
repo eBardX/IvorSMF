@@ -1,5 +1,6 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
 public import IvorSMPTE
 
 /// The frame rate and number of ticks per frame for SMPTE timecode-based time
@@ -9,14 +10,18 @@ public struct SMFTimeCode {
     // MARK: Public Initializers
 
     /// Creates a new `SMFTimeCode` instance with the provided frame rate and
-    /// number of ticks per frame, or `nil` if the number of ticks per frame is
-    /// out of range.
+    /// number of ticks per frame, or `nil` if the frame rate cannot be encoded
+    /// in a Standard MIDI File or the number of ticks per frame is out of
+    /// range.
     ///
-    /// - Parameter frameRate:      The SMPTE frame rate.
-    /// - Parameter ticksPerFrame:  The number of ticks per frame (0–255).
+    /// - Parameter frameRate:      The SMPTE frame rate. Must be one of the
+    ///                             frame rates that SMF supports: `.fps24`,
+    ///                             `.fps25`, `.fps2997`, or `.fps30`.
+    /// - Parameter ticksPerFrame:  The number of ticks per frame (1–255).
     public init?(frameRate: SMPTEFrameRate,
                  ticksPerFrame: UInt) {
-        guard (0...255).contains(ticksPerFrame)
+        guard Self._convertToByteValue(frameRate) != nil,
+              (1...255).contains(ticksPerFrame)
         else { return nil }
 
         self.frameRate = frameRate
@@ -28,17 +33,33 @@ public struct SMFTimeCode {
     /// The SMPTE frame rate.
     public let frameRate: SMPTEFrameRate
 
-    /// The number of ticks per frame.
+    /// The number of ticks per frame (1–255).
     public let ticksPerFrame: UInt
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - Equatable
 
-extension SMFTimeCode: BytesValueConvertible {
+extension SMFTimeCode: Equatable {
+}
 
-    // MARK: Internal Initializers
+// MARK: - Hashable
 
-    internal init?(bytesValue: [UInt8]) {
+extension SMFTimeCode: Hashable {
+}
+
+// MARK: - MIDIBytesConvertible
+
+extension SMFTimeCode: MIDIBytesConvertible {
+
+    // MARK: Public Initializers
+
+    /// Creates an `SMFTimeCode` instance from its SMF encoding, or `nil` if the
+    /// bytes do not encode a valid timecode division.
+    ///
+    /// - Parameter bytesValue: Two bytes: the negated SMPTE frame rate (-24,
+    ///                         -25, -29, or -30) in two’s complement, followed
+    ///                         by the number of ticks per frame.
+    public init?(bytesValue: [UInt8]) {
         guard bytesValue.count == 2,
               let frameRate = Self._convertToFrameRate(bytesValue[0])
         else { return nil }
@@ -47,9 +68,13 @@ extension SMFTimeCode: BytesValueConvertible {
                   ticksPerFrame: UInt(bytesValue[1]))
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this timecode division: two bytes, the negated SMPTE
+    /// frame rate (-24, -25, -29, or -30) in two’s complement, followed by the
+    /// number of ticks per frame. Never `nil`, because every valid timecode
+    /// division can be encoded.
+    public var bytesValue: [UInt8]? {
         guard let byte0Value = Self._convertToByteValue(frameRate),
               let byte1Value = UInt8(exactly: ticksPerFrame)
         else { return nil }
@@ -72,6 +97,9 @@ extension SMFTimeCode: BytesValueConvertible {
 
         case .fps30:
             0xe2
+
+        default:
+            nil
         }
     }
 
@@ -93,16 +121,6 @@ extension SMFTimeCode: BytesValueConvertible {
             nil
         }
     }
-}
-
-// MARK: - Equatable
-
-extension SMFTimeCode: Equatable {
-}
-
-// MARK: - Hashable
-
-extension SMFTimeCode: Hashable {
 }
 
 // MARK: - Sendable

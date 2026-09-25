@@ -1,5 +1,6 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
 public import XestiTools
 
 /// A MIDI tempo value, in microseconds per quarter note (0–16,777,215).
@@ -43,22 +44,30 @@ extension SMFTempo {
     }
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - MIDIBytesConvertible
 
-extension SMFTempo: BytesValueConvertible {
+extension SMFTempo: MIDIBytesConvertible {
 
-    // MARK: Internal Initializers
+    // MARK: Public Initializers
 
-    internal init?(bytesValue: [UInt8]) {
+    /// Creates an `SMFTempo` instance from its SMF encoding, or `nil` if the
+    /// bytes do not encode a valid tempo value.
+    ///
+    /// - Parameter bytesValue: Three bytes holding the number of microseconds
+    ///                         per quarter note, most significant byte first.
+    public init?(bytesValue: [UInt8]) {
         guard bytesValue.count == 3
         else { return nil }
 
         self.init(uintValue: (UInt(bytesValue[0]) << 16) | (UInt(bytesValue[1]) << 8) | UInt(bytesValue[2]))
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this tempo value: three bytes holding the number of
+    /// microseconds per quarter note, most significant byte first. Never
+    /// `nil`, because every valid tempo value can be encoded.
+    public var bytesValue: [UInt8]? {
         guard let byte0Value = UInt8(exactly: uintValue >> 16),
               let byte1Value = UInt8(exactly: (uintValue >> 8) & 0xff),
               let byte2Value = UInt8(exactly: uintValue & 0xff)

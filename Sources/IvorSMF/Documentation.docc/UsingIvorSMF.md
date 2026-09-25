@@ -46,10 +46,28 @@ always safe to run the full pipeline.
 let (sequence, diagnostics) = try SMFParser().parse(data)
 ```
 
-The parser is always tolerant. It performs only byte/structural recovery —
-clamping an over-long chunk length, skipping a stray system real-time byte,
-tolerating a track-count mismatch between the header and the actual `MTrk`
-chunks it finds — and reports each repair as an ``SMFParser/Diagnostic``.
+The parser is always tolerant. It performs only byte/structural recovery, and
+reports each repair as an ``SMFParser/Diagnostic``:
+
+- ``SMFParser/Diagnostic/chunkLengthClamped(declared:available:)`` — a chunk’s
+  declared length exceeded the remaining data, so it was clamped to what was
+  available.
+- ``SMFParser/Diagnostic/metaEventLengthClamped(type:declared:expected:)`` — a
+  recognized fixed-length meta-event declared more data bytes than its type
+  defines, so the surplus bytes were ignored.
+- ``SMFParser/Diagnostic/metaEventLengthInvalid(type:declared:expected:)`` — a
+  fixed-length meta-event declared fewer data bytes than its type defines, so
+  it was kept as ``SMFMetaMessage/unknown(_:_:)``.
+- ``SMFParser/Diagnostic/strayRealTimeByteSkipped`` — a stray system real-time
+  byte in the event stream was skipped.
+- ``SMFParser/Diagnostic/trackCountMismatch(declared:actual:)`` — the header’s
+  track count did not match the number of `MTrk` chunks found.
+- ``SMFParser/Diagnostic/truncatedEventSkipped`` — a track chunk ended partway
+  through an event, so the incomplete event was skipped and the track ended
+  there.
+- ``SMFParser/Diagnostic/variableLengthQuantityClamped`` — a variable-length
+  quantity exceeded the 0x0FFFFFFF maximum, so it was clamped to that maximum.
+
 Diagnostics are always returned, never thrown; each has a human-readable
 `message`:
 
@@ -205,10 +223,13 @@ SMFSequence
 ```
 
 Some payloads come from companion packages. A `.midi` event carries a
-`MIDIChannelMessage` from IvorMIDI. An ``SMFTimeCode`` division carries an
-`SMPTEFrameRate`, and the `.smpteOffset` case of ``SMFMetaMessage`` carries an
+`MIDIChannelMessage` from IvorMIDI. An ``SMFTimeCode`` division carries a
+`SMPTEFrameRate`, and the `.smpteOffset` case of ``SMFMetaMessage`` carries a
 `SMPTETime`; both types come from IvorSMPTE. Import those packages alongside
-IvorSMF to construct or inspect these values.
+IvorSMF to construct or inspect these values. A Standard MIDI File can encode
+only four of IvorSMPTE's frame rates — `.fps24`, `.fps25`, `.fps2997`
+(drop-frame), and `.fps30` — so ``SMFTimeCode`` rejects any other rate, and a
+SMPTE offset at any other rate cannot be formatted.
 
 Event times are **absolute** ticks from the start of the track, not the delta
 times used on the wire — the parser decodes deltas into absolute time, and the
@@ -309,11 +330,15 @@ rather than guessing at a fix.
 
 The parser’s diagnostics are:
 
- Case                                                             | Meaning
-:----                                                             |:-------
- ``SMFParser/Diagnostic/chunkLengthClamped(declared:available:)`` | A chunk’s declared length exceeded the remaining data; clamped to what was available.
- ``SMFParser/Diagnostic/strayRealTimeByteSkipped``                | A system real-time byte (0xF8–0xFE) appeared in the event stream and was discarded.
- ``SMFParser/Diagnostic/trackCountMismatch(declared:actual:)``    | The header’s `ntrks` field did not match the number of MTrk chunks found.
+ Case                                                                          | Meaning
+:----                                                                          |:-------
+ ``SMFParser/Diagnostic/chunkLengthClamped(declared:available:)``              | A chunk’s declared length exceeded the remaining data; clamped to what was available.
+ ``SMFParser/Diagnostic/metaEventLengthClamped(type:declared:expected:)``    | A recognized fixed-length meta-event declared more data bytes than its type defines; the surplus bytes were ignored.
+ ``SMFParser/Diagnostic/metaEventLengthInvalid(type:declared:expected:)``    | A fixed-length meta-event declared fewer data bytes than its type defines; the event was retained as ``SMFMetaMessage/unknown(_:_:)``.
+ ``SMFParser/Diagnostic/strayRealTimeByteSkipped``                             | A system real-time byte (0xF8–0xFE) appeared in the event stream and was discarded.
+ ``SMFParser/Diagnostic/trackCountMismatch(declared:actual:)``                 | The header’s `ntrks` field did not match the number of MTrk chunks found.
+ ``SMFParser/Diagnostic/truncatedEventSkipped``                                | A track chunk ended partway through an event; the incomplete event was skipped.
+ ``SMFParser/Diagnostic/variableLengthQuantityClamped``                        | A variable-length quantity exceeded the 0x0FFFFFFF maximum; clamped to that maximum.
 
 ## Concurrency
 

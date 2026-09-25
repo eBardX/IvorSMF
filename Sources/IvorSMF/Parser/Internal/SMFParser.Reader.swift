@@ -334,9 +334,9 @@ extension SMFParser.Reader {
                     break
                 }
             } catch SMFParser.Error.dataExhaustedPrematurely {
-                currentIndex = data.count
-                chunkBytesLeft = 0
-                break
+                diagnostics.append(.truncatedEventSkipped)
+
+                break   // skip to the end of this chunk only
             }
         }
 

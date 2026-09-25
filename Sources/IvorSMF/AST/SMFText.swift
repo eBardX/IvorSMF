@@ -1,5 +1,6 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
 public import XestiTools
 
 /// A text string stored in an SMF file, whose characters are encodable
@@ -48,21 +49,27 @@ extension SMFText {
     }
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - MIDIBytesConvertible
 
-extension SMFText: BytesValueConvertible {
+extension SMFText: MIDIBytesConvertible {
 
-    // MARK: Internal Initializers
+    // MARK: Public Initializers
 
-    internal init?(bytesValue: [UInt8]) {
+    /// Creates an `SMFText` instance from its SMF encoding, or `nil` if the
+    /// bytes do not encode a valid text string.
+    ///
+    /// - Parameter bytesValue: The bytes of the text, one byte per character.
+    public init?(bytesValue: [UInt8]) {
         let text = String(bytesValue.map { Character(Unicode.Scalar($0)) })
 
         self.init(stringValue: text)
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this text string: one byte per character, or `nil`
+    /// if any character cannot be encoded as a single byte.
+    public var bytesValue: [UInt8]? {
         var bytes: [UInt8] = []
 
         for scalar in stringValue.unicodeScalars {

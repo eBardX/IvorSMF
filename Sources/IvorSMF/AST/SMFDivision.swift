@@ -1,5 +1,7 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
+
 /// The time division of an SMF sequence, specifying how event times are
 /// measured.
 public enum SMFDivision {
@@ -11,13 +13,30 @@ public enum SMFDivision {
     case timeCode(SMFTimeCode)
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - Equatable
 
-extension SMFDivision: BytesValueConvertible {
+extension SMFDivision: Equatable {
+}
 
-    // MARK: Internal Initializers
+// MARK: - Hashable
 
-    internal init?(bytesValue: [UInt8]) {
+extension SMFDivision: Hashable {
+}
+
+// MARK: - MIDIBytesConvertible
+
+extension SMFDivision: MIDIBytesConvertible {
+
+    // MARK: Public Initializers
+
+    /// Creates an `SMFDivision` instance from its SMF encoding, or `nil` if the
+    /// bytes do not encode a valid time division.
+    ///
+    /// - Parameter bytesValue: Two bytes, most significant byte first. If the
+    ///                         high bit is clear, they hold the number of ticks
+    ///                         per quarter note; otherwise, they hold a
+    ///                         timecode division.
+    public init?(bytesValue: [UInt8]) {
         guard bytesValue.count == 2
         else { return nil }
 
@@ -34,9 +53,12 @@ extension SMFDivision: BytesValueConvertible {
         }
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this time division, as stored in the SMF header
+    /// chunk: two bytes, most significant byte first. Never `nil`, because
+    /// every valid time division can be encoded.
+    public var bytesValue: [UInt8]? {
         switch self {
         case let .metrical(tickRate):
             tickRate.bytesValue
@@ -45,16 +67,6 @@ extension SMFDivision: BytesValueConvertible {
             timeCode.bytesValue
         }
     }
-}
-
-// MARK: - Equatable
-
-extension SMFDivision: Equatable {
-}
-
-// MARK: - Hashable
-
-extension SMFDivision: Hashable {
 }
 
 // MARK: - Sendable

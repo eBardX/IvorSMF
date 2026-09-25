@@ -1,0 +1,60 @@
+{
+  "originHash" : "7e425bebe857dda2731e6bb879bd8d70c04b465d7cc642c86250ae5a42145e16",
+  "pins" : [
+    {
+      "identity" : "bigint",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/attaswift/BigInt.git",
+      "state" : {
+        "revision" : "63feef7820abb1a8fb08587d7da56bb0b7db8751",
+        "version" : "6.0.1"
+      }
+    },
+    {
+      "identity" : "ivormidi",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/eBardX/IvorMIDI.git",
+      "state" : {
+        "branch" : "v2-main",
+        "revision" : "2994b12e62d0cb20626e1d910c9de98f14669b43"
+      }
+    },
+    {
+      "identity" : "ivorsmpte",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/eBardX/IvorSMPTE.git",
+      "state" : {
+        "branch" : "develop",
+        "revision" : "8d31137b34ceb47c0e5fd2040a6cf2e1884c9a2a"
+      }
+    },
+    {
+      "identity" : "swift-numerics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-numerics",
+      "state" : {
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
+      }
+    },
+    {
+      "identity" : "xestinumbers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/eBardX/XestiNumbers.git",
+      "state" : {
+        "revision" : "1df695e1a3fcc8f553c273b6231032a12386eecb",
+        "version" : "1.3.1"
+      }
+    },
+    {
+      "identity" : "xestitools",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/eBardX/XestiTools.git",
+      "state" : {
+        "revision" : "35a4c43dde224aadcadad66dac7a35104537694d",
+        "version" : "10.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

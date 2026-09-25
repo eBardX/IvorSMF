@@ -259,6 +259,22 @@ extension SMFParserTests {
     }
 
     @Test
+    func parse_invalidDivision_zeroTicksPerFrame_throws() {
+        // SMPTE division at 24 fps (0xe8) with zero ticks per frame.
+        var bytes: [UInt8] = []
+
+        bytes += [0x4d, 0x54, 0x68, 0x64]
+        bytes += [0x00, 0x00, 0x00, 0x06]
+        bytes += [0x00, 0x00]
+        bytes += [0x00, 0x01]
+        bytes += [0xe8, 0x00]
+
+        #expect(throws: SMFParser.Error.invalidDivision([0xe8, 0x00])) {
+            try SMFParser().parse(Data(bytes))
+        }
+    }
+
+    @Test
     func parse_invalidEventTime_throws() {
         // Nine events each advancing the cumulative tick count by the
         // maximum encodable delta-time (0x0fffffff) push the running total

@@ -111,8 +111,19 @@ extension SMFTimeCodeTests {
     }
 
     @Test
+    func init_bytesValue_zeroTicksPerFrame() {
+        #expect(SMFTimeCode(bytesValue: [0xe8, 0x00]) == nil)
+    }
+
+    @Test
     func init_invalid_ticksPerFrame() {
+        #expect(SMFTimeCode(frameRate: .fps24, ticksPerFrame: 0) == nil)
         #expect(SMFTimeCode(frameRate: .fps24, ticksPerFrame: 256) == nil)
+    }
+
+    @Test(arguments: [SMPTEFrameRate.fps23976, .fps2997NonDrop, .fps50, .fps5994, .fps5994NonDrop, .fps60])
+    func init_invalid_unsupportedFrameRate(frameRate: SMPTEFrameRate) {
+        #expect(SMFTimeCode(frameRate: frameRate, ticksPerFrame: 4) == nil)
     }
 
     @Test
@@ -126,9 +137,9 @@ extension SMFTimeCodeTests {
 
     @Test
     func init_validValues_ticksPerFrameBoundaries() {
-        let tc0 = SMFTimeCode(frameRate: .fps24, ticksPerFrame: 0)
+        let tc1 = SMFTimeCode(frameRate: .fps24, ticksPerFrame: 1)
 
-        #expect(tc0?.ticksPerFrame == 0)
+        #expect(tc1?.ticksPerFrame == 1)
 
         let tc255 = SMFTimeCode(frameRate: .fps24, ticksPerFrame: 255)
 

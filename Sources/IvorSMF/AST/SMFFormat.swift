@@ -1,5 +1,6 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
 public import XestiTools
 
 /// An SMF file format identifier (0–2).
@@ -54,22 +55,30 @@ extension SMFFormat {
     }
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - MIDIBytesConvertible
 
-extension SMFFormat: BytesValueConvertible {
+extension SMFFormat: MIDIBytesConvertible {
 
-    // MARK: Internal Initializers
+    // MARK: Public Initializers
 
-    internal init?(bytesValue: [UInt8]) {
+    /// Creates an `SMFFormat` instance from its SMF encoding, or `nil` if the
+    /// bytes do not encode a valid format identifier.
+    ///
+    /// - Parameter bytesValue: Two bytes holding the format identifier, most
+    ///                         significant byte first.
+    public init?(bytesValue: [UInt8]) {
         guard bytesValue.count == 2
         else { return nil }
 
         self.init(uintValue: (UInt(bytesValue[0]) << 8) | UInt(bytesValue[1]))
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this format identifier: two bytes holding the format
+    /// identifier, most significant byte first. Never `nil`, because every
+    /// valid format identifier can be encoded.
+    public var bytesValue: [UInt8]? {
         guard let byte0Value = UInt8(exactly: uintValue >> 8),
               let byte1Value = UInt8(exactly: uintValue & 0xff)
         else { return nil }

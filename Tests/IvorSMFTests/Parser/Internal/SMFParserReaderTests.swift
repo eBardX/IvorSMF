@@ -166,6 +166,50 @@ extension SMFParserReaderTests {
     }
 
     @Test
+    func readSequence_truncatedEvent_keepsPriorEvents() throws {
+        // The MTrk chunk ends after the status byte of a second note-on, so
+        // that event's data bytes lie beyond the chunk. The track ends there,
+        // keeping the complete note-on that preceded it, and the skipped
+        // event is reported.
+        var bytes = makeHeaderBytes(format: 0x0000, ntrks: 0x0001, division: 0x01e0)
+
+        bytes += makeTrackBytes([0x00, 0x90, 0x3c, 0x40, 0x00, 0x90])
+
+        var reader = SMFParser.Reader(data: Data(bytes))
+        let (sequence, diagnostics) = try reader.readSequence()
+
+        #expect(sequence.tracks.count == 1)
+        #expect(sequence.tracks[0].events.count == 1)
+        #expect(diagnostics == [.truncatedEventSkipped])
+
+        if case let .midi(_, message) = sequence.tracks[0].events[0] {
+            #expect(message == .noteOn(MIDIChannel(uintValue: 1)!,      // swiftlint:disable:this force_unwrapping
+                                       MIDIData1Value(uintValue: 0x3c)!, // swiftlint:disable:this force_unwrapping
+                                       MIDIData1Value(uintValue: 0x40)!)) // swiftlint:disable:this force_unwrapping
+        } else {
+            Issue.record("Expected MIDI event at events[0]")
+        }
+    }
+
+    @Test
+    func readSequence_truncatedEvent_laterTracksKept() throws {
+        // The first MTrk chunk ends partway through a note-on; the track
+        // that follows it must still be parsed rather than discarded.
+        var bytes = makeHeaderBytes(format: 0x0001, ntrks: 0x0002, division: 0x01e0)
+
+        bytes += makeTrackBytes([0x00, 0x90, 0x3c, 0x40, 0x00, 0x90])
+        bytes += makeTrackBytes([0x00, 0xff, 0x2f, 0x00])
+
+        var reader = SMFParser.Reader(data: Data(bytes))
+        let (sequence, diagnostics) = try reader.readSequence()
+
+        #expect(sequence.tracks.count == 2)
+        #expect(sequence.tracks[0].events.count == 1)
+        #expect(sequence.tracks[1].events == [.meta(.zero, .endOfTrack)])
+        #expect(diagnostics == [.truncatedEventSkipped])
+    }
+
+    @Test
     func readSequence_unknownChunkType_ignored() throws {
         var bytes = makeHeaderBytes(format: 0x0000, ntrks: 0x0001, division: 0x01e0)
 

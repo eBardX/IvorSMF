@@ -55,14 +55,14 @@ extension SMFValidator.Checker {
                 issues.append(.eventDataTooLarge(trackIndex: idx))
             }
 
+        case .midi:
+            break
+
         case let .sysEx(_, message):
             if let dataBytes = message.dataBytes,
                UInt(dataBytes.count) > Self.maxVarlen {
                 issues.append(.eventDataTooLarge(trackIndex: idx))
             }
-
-        case .midi:
-            break
         }
     }
 

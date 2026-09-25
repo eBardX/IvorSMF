@@ -2,9 +2,7 @@
 
 internal import IvorSMPTE
 
-// MARK: - BytesValueConvertible
-
-extension SMPTETime: BytesValueConvertible {
+extension SMPTETime {
 
     // MARK: Internal Initializers
 
@@ -54,6 +52,9 @@ extension SMPTETime: BytesValueConvertible {
 
         case .fps30:
             3
+
+        default:
+            nil
         }
     }
 

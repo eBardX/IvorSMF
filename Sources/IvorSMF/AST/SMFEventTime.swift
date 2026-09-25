@@ -63,21 +63,19 @@ extension SMFEventTime {
     /// Returns this event time expressed as a SMPTE timecode value for the
     /// provided timecode-based time division.
     ///
+    /// At 29.97 frames per second, the result uses drop-frame numbering.
+    /// Timecode wraps around to 00:00:00:00 after 24 hours.
+    ///
     /// - Parameter timeCode:   The timecode-based time division.
     ///
     /// - Returns:  The corresponding `SMPTETime` value.
     public func smpteTime(_ timeCode: SMFTimeCode) -> SMPTETime {
+        let frameRate = timeCode.frameRate
         let (frames, subframe) = uintValue.quotientAndRemainder(dividingBy: timeCode.ticksPerFrame)
-        let (seconds, frame) = frames.quotientAndRemainder(dividingBy: timeCode.frameRate.uintValue)
-        let (minutes, second) = seconds.quotientAndRemainder(dividingBy: 60)
-        let (hour, minute) = minutes.quotientAndRemainder(dividingBy: 60)
         let fraction = UInt(Double(subframe) * 100 / Double(timeCode.ticksPerFrame))
 
-        return SMPTETime(frameRate: timeCode.frameRate,
-                         hour: hour,
-                         minute: minute,
-                         second: second,
-                         frame: frame,
+        return SMPTETime(frameRate: frameRate,
+                         frameCount: frames % frameRate.framesPerDay,
                          fraction: fraction).require()
     }
 }

@@ -58,6 +58,32 @@ extension SMFEventTimeTests {
     }
 
     @Test
+    func smpteTime_fps2997_dropFrame() {
+        let eventTime = SMFEventTime(uintValue: 1_800 * 4)!                  // swiftlint:disable:this force_unwrapping
+        let timeCode = SMFTimeCode(frameRate: .fps2997, ticksPerFrame: 4)!   // swiftlint:disable:this force_unwrapping
+        let time = eventTime.smpteTime(timeCode)
+
+        #expect(time.frameRate == .fps2997)
+        #expect(time.hour == 0)
+        #expect(time.minute == 1)
+        #expect(time.second == 0)
+        #expect(time.frame == 2)
+        #expect(time.fraction == 0)
+    }
+
+    @Test
+    func smpteTime_wrapsAfter24Hours() {
+        let eventTime = SMFEventTime(uintValue: (24 * 86_400) + 25)!       // swiftlint:disable:this force_unwrapping
+        let timeCode = SMFTimeCode(frameRate: .fps24, ticksPerFrame: 1)!   // swiftlint:disable:this force_unwrapping
+        let time = eventTime.smpteTime(timeCode)
+
+        #expect(time.hour == 0)
+        #expect(time.minute == 0)
+        #expect(time.second == 1)
+        #expect(time.frame == 1)
+    }
+
+    @Test
     func zero() {
         #expect(SMFEventTime.zero.uintValue == 0)
     }

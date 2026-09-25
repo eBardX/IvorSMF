@@ -28,6 +28,10 @@ extension SMFParser {
         /// the header.
         case trackCountMismatch(declared: UInt, actual: UInt)
 
+        /// A track chunk ended partway through an event; the incomplete event
+        /// was skipped and the track ended there.
+        case truncatedEventSkipped
+
         /// A variable-length quantity exceeded the 0x0fffffff maximum defined by
         /// RP-001 (p.2) and was clamped to that maximum.
         case variableLengthQuantityClamped
@@ -59,6 +63,9 @@ extension SMFParser.Diagnostic {
 
         case let .trackCountMismatch(declared, actual):
             "Header declared \(declared) track(s); found \(actual)"
+
+        case .truncatedEventSkipped:
+            "Track chunk ended partway through an event; incomplete event skipped"
 
         case .variableLengthQuantityClamped:
             "Variable-length quantity exceeds 0x0fffffff; clamped to maximum"

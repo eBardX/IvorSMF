@@ -58,6 +58,19 @@ extension SMPTETimeSMFTests {
         #expect(time?.bytesValue == [0x60, 0x00, 0x00, 0x00, 0x00])
     }
 
+    @Test(arguments: [SMPTEFrameRate.fps23976, .fps2997NonDrop, .fps50, .fps5994, .fps5994NonDrop, .fps60])
+    func bytesValue_unsupportedFrameRate(frameRate: SMPTEFrameRate) {
+        let time = SMPTETime(frameRate: frameRate,
+                             hour: 1,
+                             minute: 0,
+                             second: 0,
+                             frame: 0,
+                             fraction: 0)
+
+        #expect(time != nil)
+        #expect(time?.bytesValue == nil)
+    }
+
     @Test
     func init_bytesValue() {
         let time = SMPTETime(bytesValue: [0x01, 0x02, 0x03, 0x04, 0x05])

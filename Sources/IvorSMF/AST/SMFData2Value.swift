@@ -1,5 +1,6 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
 public import XestiTools
 
 /// A 16-bit big-endian SMF data value (0–65,535).
@@ -43,22 +44,30 @@ extension SMFData2Value {
     }
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - MIDIBytesConvertible
 
-extension SMFData2Value: BytesValueConvertible {
+extension SMFData2Value: MIDIBytesConvertible {
 
-    // MARK: Internal Initializers
+    // MARK: Public Initializers
 
-    internal init?(bytesValue: [UInt8]) {
+    /// Creates an `SMFData2Value` instance from its SMF encoding, or `nil` if
+    /// the bytes do not encode a valid data value.
+    ///
+    /// - Parameter bytesValue: Two bytes holding the value, most significant
+    ///                         byte first.
+    public init?(bytesValue: [UInt8]) {
         guard bytesValue.count == 2
         else { return nil }
 
         self.init(uintValue: (UInt(bytesValue[0]) << 8) | UInt(bytesValue[1]))
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this data value: two bytes holding the value, most
+    /// significant byte first. Never `nil`, because every valid data value can
+    /// be encoded.
+    public var bytesValue: [UInt8]? {
         guard let byte0Value = UInt8(exactly: uintValue >> 8),
               let byte1Value = UInt8(exactly: uintValue & 0xff)
         else { return nil }

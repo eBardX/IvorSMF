@@ -67,6 +67,11 @@ extension SMFParserDiagnosticTests {
     }
 
     @Test
+    func message_truncatedEventSkipped() {
+        #expect(!SMFParser.Diagnostic.truncatedEventSkipped.message.isEmpty)
+    }
+
+    @Test
     func message_variableLengthQuantityClamped() {
         #expect(!SMFParser.Diagnostic.variableLengthQuantityClamped.message.isEmpty)
     }

@@ -7,28 +7,29 @@ extension SMFNormalizer {
     /// A change applied when normalizing an ``SMFSequence`` to canonical
     /// form.
     public enum Change {
+
         /// The sequence declared format 0 but had more than one track; it was
         /// reinterpreted as format 1.
         case coercedFormat(from: SMFFormat, to: SMFFormat)
 
-        /// This track had no terminal End-of-Track meta-event; one was
+        /// The track had no terminal End-of-Track meta-event; one was
         /// appended.
         case insertedEndOfTrack(trackIndex: Int)
 
-        /// This track had one or more End-of-Track meta-events that were not
+        /// The track had one or more End-of-Track meta-events that were not
         /// already present as the sole final event; they were consolidated
         /// into a single trailing End-of-Track.
         case relocatedEndOfTrack(trackIndex: Int)
 
-        /// This track had a sequence-number meta-event that did not appear
+        /// The track had a sequence-number meta-event that did not appear
         /// at time zero; its time was reset to zero.
         case relocatedSequenceNumber(trackIndex: Int)
 
-        /// This track had a tempo meta-event, but the sequence is format 1
+        /// The track had a tempo meta-event, but the sequence is format 1
         /// with more than one track; the event was moved to track 0.
         case relocatedTempo(trackIndex: Int)
 
-        /// This track had a time-signature meta-event, but the sequence is
+        /// The track had a time-signature meta-event, but the sequence is
         /// format 1 with more than one track; the event was moved to
         /// track 0.
         case relocatedTimeSignature(trackIndex: Int)

@@ -1,5 +1,6 @@
 // © 2025–2026 John Gary Pusey (see LICENSE.md)
 
+public import IvorMIDI
 public import XestiTools
 
 /// The number of MIDI ticks per quarter note for metrical time division
@@ -44,22 +45,31 @@ extension SMFTickRate {
     }
 }
 
-// MARK: - BytesValueConvertible
+// MARK: - MIDIBytesConvertible
 
-extension SMFTickRate: BytesValueConvertible {
+extension SMFTickRate: MIDIBytesConvertible {
 
-    // MARK: Internal Initializers
+    // MARK: Public Initializers
 
-    internal init?(bytesValue: [UInt8]) {
+    /// Creates an `SMFTickRate` instance from its SMF encoding, or `nil` if the
+    /// bytes do not encode a valid tick rate.
+    ///
+    /// - Parameter bytesValue: Two bytes holding the number of ticks per
+    ///                         quarter note, most significant byte first; the
+    ///                         high bit of the first byte must be clear.
+    public init?(bytesValue: [UInt8]) {
         guard bytesValue.count == 2
         else { return nil }
 
         self.init(uintValue: (UInt(bytesValue[0]) << 8) | UInt(bytesValue[1]))
     }
 
-    // MARK: Internal Instance Properties
+    // MARK: Public Instance Properties
 
-    internal var bytesValue: [UInt8]? {
+    /// The SMF encoding of this tick rate: two bytes holding the number of
+    /// ticks per quarter note, most significant byte first. Never `nil`,
+    /// because every valid tick rate can be encoded.
+    public var bytesValue: [UInt8]? {
         guard let byte0Value = UInt8(exactly: uintValue >> 8),
               let byte1Value = UInt8(exactly: uintValue & 0xff)
         else { return nil }
