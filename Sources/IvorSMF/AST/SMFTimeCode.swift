@@ -20,12 +20,28 @@ public struct SMFTimeCode {
     /// - Parameter ticksPerFrame:  The number of ticks per frame (1–255).
     public init?(frameRate: SMPTEFrameRate,
                  ticksPerFrame: UInt) {
-        guard Self._convertToByteValue(frameRate) != nil,
+        guard Self.supports(frameRate),
               (1...255).contains(ticksPerFrame)
         else { return nil }
 
         self.frameRate = frameRate
         self.ticksPerFrame = ticksPerFrame
+    }
+
+    // MARK: Public Type Methods
+
+    /// Returns a Boolean value indicating whether the given SMPTE frame rate
+    /// can be encoded in a Standard MIDI File.
+    ///
+    /// SMF supports only four frame rates, both in a timecode division and in
+    /// an SMPTE Offset meta-event: `.fps24`, `.fps25`, `.fps2997`, and
+    /// `.fps30`.
+    ///
+    /// - Parameter frameRate:  The SMPTE frame rate.
+    ///
+    /// - Returns:  `true` if the frame rate can be encoded; otherwise, `false`.
+    public static func supports(_ frameRate: SMPTEFrameRate) -> Bool {
+        _convertToByteValue(frameRate) != nil
     }
 
     // MARK: Public Instance Properties

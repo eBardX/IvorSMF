@@ -229,7 +229,9 @@ Some payloads come from companion packages. A `.midi` event carries a
 IvorSMF to construct or inspect these values. A Standard MIDI File can encode
 only four of IvorSMPTE's frame rates — `.fps24`, `.fps25`, `.fps2997`
 (drop-frame), and `.fps30` — so ``SMFTimeCode`` rejects any other rate, and a
-SMPTE offset at any other rate cannot be formatted.
+SMPTE offset at any other rate cannot be formatted. Call
+``SMFTimeCode/supports(_:)`` to check a frame rate before using it in either
+place.
 
 Event times are **absolute** ticks from the start of the track, not the delta
 times used on the wire — the parser decodes deltas into absolute time, and the

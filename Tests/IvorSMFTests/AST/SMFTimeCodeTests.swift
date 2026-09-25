@@ -158,4 +158,25 @@ extension SMFTimeCodeTests {
         #expect(roundTripped?.frameRate == .fps25)
         #expect(roundTripped?.ticksPerFrame == 40)
     }
+
+    @Test(arguments: SMPTEFrameRate.allCases)
+    func supports(frameRate: SMPTEFrameRate) {
+        let expected: Set<SMPTEFrameRate> = [.fps24, .fps25, .fps2997, .fps30]
+
+        #expect(SMFTimeCode.supports(frameRate) == expected.contains(frameRate))
+    }
+
+    // The timecode division and the SMPTE Offset meta-event encode frame
+    // rates separately, so this checks that `supports(_:)` holds for both.
+    @Test(arguments: SMPTEFrameRate.allCases)
+    func supports_matchesSMPTEOffsetEncoding(frameRate: SMPTEFrameRate) throws {
+        let time = try #require(SMPTETime(frameRate: frameRate,
+                                          hour: 1,
+                                          minute: 0,
+                                          second: 0,
+                                          frame: 0,
+                                          fraction: 0))
+
+        #expect(SMFTimeCode.supports(frameRate) == (time.bytesValue != nil))
+    }
 }
