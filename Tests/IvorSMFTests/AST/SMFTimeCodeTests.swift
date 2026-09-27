@@ -25,8 +25,8 @@ extension SMFTimeCodeTests {
     }
 
     @Test
-    func bytesValue_fps2997() {
-        let tc = SMFTimeCode(frameRate: .fps2997, ticksPerFrame: 4)
+    func bytesValue_fps2997Drop() {
+        let tc = SMFTimeCode(frameRate: .fps2997Drop, ticksPerFrame: 4)
 
         #expect(tc?.bytesValue == [0xe3, 0x04])
     }
@@ -82,11 +82,11 @@ extension SMFTimeCodeTests {
     }
 
     @Test
-    func init_bytesValue_fps2997() {
+    func init_bytesValue_fps2997Drop() {
         let tc = SMFTimeCode(bytesValue: [0xe3, 0x04])
 
         #expect(tc != nil)
-        #expect(tc?.frameRate == .fps2997)
+        #expect(tc?.frameRate == .fps2997Drop)
     }
 
     @Test
@@ -121,7 +121,7 @@ extension SMFTimeCodeTests {
         #expect(SMFTimeCode(frameRate: .fps24, ticksPerFrame: 256) == nil)
     }
 
-    @Test(arguments: [SMPTEFrameRate.fps23976, .fps2997NonDrop, .fps50, .fps5994, .fps5994NonDrop, .fps60])
+    @Test(arguments: [SMPTEFrameRate.fps23976, .fps2997, .fps50, .fps30Drop, .fps5994, .fps5994Drop, .fps60, .fps60Drop])
     func init_invalid_unsupportedFrameRate(frameRate: SMPTEFrameRate) {
         #expect(SMFTimeCode(frameRate: frameRate, ticksPerFrame: 4) == nil)
     }
@@ -161,7 +161,7 @@ extension SMFTimeCodeTests {
 
     @Test(arguments: SMPTEFrameRate.allCases)
     func supports(frameRate: SMPTEFrameRate) {
-        let expected: Set<SMPTEFrameRate> = [.fps24, .fps25, .fps2997, .fps30]
+        let expected: Set<SMPTEFrameRate> = [.fps24, .fps25, .fps2997Drop, .fps30]
 
         #expect(SMFTimeCode.supports(frameRate) == expected.contains(frameRate))
     }
@@ -175,7 +175,7 @@ extension SMFTimeCodeTests {
                                           minute: 0,
                                           second: 0,
                                           frame: 0,
-                                          fraction: 0))
+                                          subframe: 0))
 
         #expect(SMFTimeCode.supports(frameRate) == (time.bytesValue != nil))
     }

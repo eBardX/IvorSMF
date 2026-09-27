@@ -16,7 +16,7 @@ extension SMPTETime {
                   minute: UInt(bytesValue[1]),
                   second: UInt(bytesValue[2]),
                   frame: UInt(bytesValue[3]),
-                  fraction: UInt(bytesValue[4]))
+                  subframe: UInt(bytesValue[4]))
     }
 
     // MARK: Internal Instance Properties
@@ -27,7 +27,7 @@ extension SMPTETime {
               let byte1Value = UInt8(exactly: minute),
               let byte2Value = UInt8(exactly: second),
               let byte3Value = UInt8(exactly: frame),
-              let byte4Value = UInt8(exactly: fraction)
+              let byte4Value = UInt8(exactly: subframe)
         else { return nil }
 
         return [(byte0ValueHi << 5) | byte0ValueLo,
@@ -47,7 +47,7 @@ extension SMPTETime {
         case .fps25:
             1
 
-        case .fps2997:
+        case .fps2997Drop:
             2
 
         case .fps30:
@@ -67,7 +67,7 @@ extension SMPTETime {
             .fps25
 
         case 2:
-            .fps2997
+            .fps2997Drop
 
         case 3:
             .fps30

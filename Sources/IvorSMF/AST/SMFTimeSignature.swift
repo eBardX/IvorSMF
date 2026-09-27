@@ -39,14 +39,14 @@ public struct SMFTimeSignature {
     // MARK: Public Instance Properties
 
     /// The number of notated 32nd notes per MIDI quarter note (usually 8).
-    public let beatRate: UInt       // notated 32nd-notes per MIDI quarter note (usually 8)
+    public let beatRate: UInt
 
     /// The number of MIDI clocks per metronome click.
-    public let clockRate: UInt      // MIDI clocks per metronome click
+    public let clockRate: UInt
 
     /// The beat unit expressed as a power of two (e.g., 2 = quarter note,
     /// 3 = eighth note).
-    public let denominator: UInt    // 1/(2^den) (e.g. 2 == 1/4, 3 == 1/8)
+    public let denominator: UInt
 
     /// The number of beats per measure.
     public let numerator: UInt

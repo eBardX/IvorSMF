@@ -15,7 +15,7 @@ public enum SMFMetaMessage {
     /// A device name.
     case deviceName(SMFText)
 
-    /// An end of track marker.
+    /// An End-of-Track marker.
     case endOfTrack
 
     /// An instrument name.

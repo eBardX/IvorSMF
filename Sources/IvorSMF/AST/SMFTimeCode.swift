@@ -16,7 +16,7 @@ public struct SMFTimeCode {
     ///
     /// - Parameter frameRate:      The SMPTE frame rate. Must be one of the
     ///                             frame rates that SMF supports: `.fps24`,
-    ///                             `.fps25`, `.fps2997`, or `.fps30`.
+    ///                             `.fps25`, `.fps2997Drop`, or `.fps30`.
     /// - Parameter ticksPerFrame:  The number of ticks per frame (1–255).
     public init?(frameRate: SMPTEFrameRate,
                  ticksPerFrame: UInt) {
@@ -28,13 +28,26 @@ public struct SMFTimeCode {
         self.ticksPerFrame = ticksPerFrame
     }
 
+    // MARK: Public Instance Properties
+
+    /// The SMPTE frame rate.
+    public let frameRate: SMPTEFrameRate
+
+    /// The number of ticks per frame (1–255).
+    public let ticksPerFrame: UInt
+}
+
+// MARK: -
+
+extension SMFTimeCode {
+
     // MARK: Public Type Methods
 
     /// Returns a Boolean value indicating whether the given SMPTE frame rate
     /// can be encoded in a Standard MIDI File.
     ///
     /// SMF supports only four frame rates, both in a timecode division and in
-    /// an SMPTE Offset meta-event: `.fps24`, `.fps25`, `.fps2997`, and
+    /// a SMPTE Offset meta-event: `.fps24`, `.fps25`, `.fps2997Drop`, and
     /// `.fps30`.
     ///
     /// - Parameter frameRate:  The SMPTE frame rate.
@@ -43,14 +56,6 @@ public struct SMFTimeCode {
     public static func supports(_ frameRate: SMPTEFrameRate) -> Bool {
         _convertToByteValue(frameRate) != nil
     }
-
-    // MARK: Public Instance Properties
-
-    /// The SMPTE frame rate.
-    public let frameRate: SMPTEFrameRate
-
-    /// The number of ticks per frame (1–255).
-    public let ticksPerFrame: UInt
 }
 
 // MARK: - Equatable
@@ -108,7 +113,7 @@ extension SMFTimeCode: MIDIBytesConvertible {
         case .fps25:
             0xe7
 
-        case .fps2997:
+        case .fps2997Drop:
             0xe3
 
         case .fps30:
@@ -128,7 +133,7 @@ extension SMFTimeCode: MIDIBytesConvertible {
             .fps25
 
         case 0xe3:
-            .fps2997
+            .fps2997Drop
 
         case 0xe2:
             .fps30

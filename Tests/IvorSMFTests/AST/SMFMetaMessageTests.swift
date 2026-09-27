@@ -552,7 +552,7 @@ extension SMFMetaMessageTests {
                                minute: 0,
                                second: 0,
                                frame: 0,
-                               fraction: 0)!                // swiftlint:disable:this force_unwrapping
+                               subframe: 0)!                // swiftlint:disable:this force_unwrapping
         let timeSig = SMFTimeSignature(numerator: 4,
                                        denominator: 2,
                                        clockRate: 24,

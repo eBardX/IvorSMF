@@ -541,7 +541,7 @@ extension SMFParserTests {
             #expect(offset.minute == 0)
             #expect(offset.second == 0)
             #expect(offset.frame == 0)
-            #expect(offset.fraction == 0)
+            #expect(offset.subframe == 0)
         } else {
             Issue.record("Expected smpteOffset meta event")
         }

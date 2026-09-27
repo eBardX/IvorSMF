@@ -17,7 +17,7 @@ extension SMPTETimeSMFTests {
                              minute: 2,
                              second: 3,
                              frame: 4,
-                             fraction: 5)
+                             subframe: 5)
 
         #expect(time?.bytesValue == [0x01, 0x02, 0x03, 0x04, 0x05])
     }
@@ -29,19 +29,19 @@ extension SMPTETimeSMFTests {
                              minute: 0,
                              second: 0,
                              frame: 0,
-                             fraction: 0)
+                             subframe: 0)
 
         #expect(time?.bytesValue == [0x20, 0x00, 0x00, 0x00, 0x00])
     }
 
     @Test
-    func bytesValue_fps2997() {
-        let time = SMPTETime(frameRate: .fps2997,
+    func bytesValue_fps2997Drop() {
+        let time = SMPTETime(frameRate: .fps2997Drop,
                              hour: 0,
                              minute: 0,
                              second: 0,
                              frame: 0,
-                             fraction: 0)
+                             subframe: 0)
 
         #expect(time?.bytesValue == [0x40, 0x00, 0x00, 0x00, 0x00])
     }
@@ -53,19 +53,19 @@ extension SMPTETimeSMFTests {
                              minute: 0,
                              second: 0,
                              frame: 0,
-                             fraction: 0)
+                             subframe: 0)
 
         #expect(time?.bytesValue == [0x60, 0x00, 0x00, 0x00, 0x00])
     }
 
-    @Test(arguments: [SMPTEFrameRate.fps23976, .fps2997NonDrop, .fps50, .fps5994, .fps5994NonDrop, .fps60])
+    @Test(arguments: [SMPTEFrameRate.fps23976, .fps2997, .fps50, .fps30Drop, .fps5994, .fps5994Drop, .fps60, .fps60Drop])
     func bytesValue_unsupportedFrameRate(frameRate: SMPTEFrameRate) {
         let time = SMPTETime(frameRate: frameRate,
                              hour: 1,
                              minute: 0,
                              second: 0,
                              frame: 0,
-                             fraction: 0)
+                             subframe: 0)
 
         #expect(time != nil)
         #expect(time?.bytesValue == nil)
@@ -81,7 +81,7 @@ extension SMPTETimeSMFTests {
         #expect(time?.minute == 2)
         #expect(time?.second == 3)
         #expect(time?.frame == 4)
-        #expect(time?.fraction == 5)
+        #expect(time?.subframe == 5)
     }
 
     @Test
@@ -93,11 +93,11 @@ extension SMPTETimeSMFTests {
     }
 
     @Test
-    func init_bytesValue_fps2997() {
+    func init_bytesValue_fps2997Drop() {
         let time = SMPTETime(bytesValue: [0x40, 0x00, 0x00, 0x00, 0x00])
 
         #expect(time != nil)
-        #expect(time?.frameRate == .fps2997)
+        #expect(time?.frameRate == .fps2997Drop)
     }
 
     @Test
@@ -127,7 +127,7 @@ extension SMPTETimeSMFTests {
                              minute: 30,
                              second: 45,
                              frame: 20,
-                             fraction: 50)
+                             subframe: 50)
 
         let bytes = time?.bytesValue
 
@@ -140,6 +140,6 @@ extension SMPTETimeSMFTests {
         #expect(roundTripped?.minute == 30)
         #expect(roundTripped?.second == 45)
         #expect(roundTripped?.frame == 20)
-        #expect(roundTripped?.fraction == 50)
+        #expect(roundTripped?.subframe == 50)
     }
 }

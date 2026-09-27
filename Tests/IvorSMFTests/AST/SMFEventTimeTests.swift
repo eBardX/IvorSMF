@@ -54,21 +54,21 @@ extension SMFEventTimeTests {
         #expect(time.minute == 0)
         #expect(time.second == 1)
         #expect(time.frame == 0)
-        #expect(time.fraction == 0)
+        #expect(time.subframe == 0)
     }
 
     @Test
-    func smpteTime_fps2997_dropFrame() {
+    func smpteTime_fps2997Drop() {
         let eventTime = SMFEventTime(uintValue: 1_800 * 4)!                  // swiftlint:disable:this force_unwrapping
-        let timeCode = SMFTimeCode(frameRate: .fps2997, ticksPerFrame: 4)!   // swiftlint:disable:this force_unwrapping
+        let timeCode = SMFTimeCode(frameRate: .fps2997Drop, ticksPerFrame: 4)!   // swiftlint:disable:this force_unwrapping
         let time = eventTime.smpteTime(timeCode)
 
-        #expect(time.frameRate == .fps2997)
+        #expect(time.frameRate == .fps2997Drop)
         #expect(time.hour == 0)
         #expect(time.minute == 1)
         #expect(time.second == 0)
         #expect(time.frame == 2)
-        #expect(time.fraction == 0)
+        #expect(time.subframe == 0)
     }
 
     @Test

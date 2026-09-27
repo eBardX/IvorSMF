@@ -227,8 +227,8 @@ Some payloads come from companion packages. A `.midi` event carries a
 `SMPTEFrameRate`, and the `.smpteOffset` case of ``SMFMetaMessage`` carries a
 `SMPTETime`; both types come from IvorSMPTE. Import those packages alongside
 IvorSMF to construct or inspect these values. A Standard MIDI File can encode
-only four of IvorSMPTE's frame rates — `.fps24`, `.fps25`, `.fps2997`
-(drop-frame), and `.fps30` — so ``SMFTimeCode`` rejects any other rate, and a
+only four of IvorSMPTE’s frame rates — `.fps24`, `.fps25`, `.fps2997Drop`,
+and `.fps30` — so ``SMFTimeCode`` rejects any other rate, and a
 SMPTE offset at any other rate cannot be formatted. Call
 ``SMFTimeCode/supports(_:)`` to check a frame rate before using it in either
 place.

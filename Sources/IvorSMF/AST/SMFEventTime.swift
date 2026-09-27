@@ -71,11 +71,11 @@ extension SMFEventTime {
     /// - Returns:  The corresponding `SMPTETime` value.
     public func smpteTime(_ timeCode: SMFTimeCode) -> SMPTETime {
         let frameRate = timeCode.frameRate
-        let (frames, subframe) = uintValue.quotientAndRemainder(dividingBy: timeCode.ticksPerFrame)
-        let fraction = UInt(Double(subframe) * 100 / Double(timeCode.ticksPerFrame))
+        let (frames, ticks) = uintValue.quotientAndRemainder(dividingBy: timeCode.ticksPerFrame)
+        let subframe = UInt(Double(ticks) * 100 / Double(timeCode.ticksPerFrame))
 
         return SMPTETime(frameRate: frameRate,
                          frameCount: frames % frameRate.framesPerDay,
-                         fraction: fraction).require()
+                         subframe: subframe).require()
     }
 }
