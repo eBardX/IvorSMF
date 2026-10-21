@@ -143,4 +143,30 @@ extension SMFFormatterTests {
         #expect(reparsed.tracks.count == 1)
         #expect(reparsed.tracks[0].events.count == 3)
     }
+
+    @Test
+    func format_systemMessages_roundTrip() throws {
+        // Universal SysEx and a song position pointer, written as SMF events
+        // and parsed back.
+        let t96 = SMFEventTime(uintValue: 96)!                      // swiftlint:disable:this force_unwrapping
+        let volume = MIDIData2Value(uintValue: 12_000)!             // swiftlint:disable:this force_unwrapping
+        let position = MIDIData2Value(uintValue: 64)!               // swiftlint:disable:this force_unwrapping
+        let track = SMFTrack(events: [.sysEx(.zero, SMFSysExMessage(for: .masterVolume(volume))),
+                                      .sysEx(t96, SMFSysExMessage(for: .songPosition(position))),
+                                      .meta(t96, .endOfTrack)])
+        let data = try SMFFormatter().format(makeValidatedSequence(makeSequence(tracks: [track])))
+        let (parsed, diagnostics) = try SMFParser().parse(data)
+
+        #expect(diagnostics.isEmpty)
+        #expect(parsed.tracks == [track])
+
+        let systemMessages = parsed.tracks[0].events.compactMap { event -> MIDISystemMessage? in
+            guard case let .sysEx(_, message) = event
+            else { return nil }
+
+            return message.systemMessage
+        }
+
+        #expect(systemMessages == [.masterVolume(volume), .songPosition(position)])
+    }
 }

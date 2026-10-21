@@ -3,7 +3,7 @@
 public import IvorMIDI
 public import XestiTools
 
-/// A MIDI tempo value, in microseconds per quarter note (0–16,777,215).
+/// A MIDI tempo value, in microseconds per quarter note (1–16,777,215).
 public struct SMFTempo: UIntRepresentable {
 
     // MARK: Public Initializers
@@ -12,7 +12,7 @@ public struct SMFTempo: UIntRepresentable {
     /// the value is not in the valid range.
     ///
     /// - Parameter uintValue:  The tempo in microseconds per quarter note.
-    ///                         Must be in the range 0–16,777,215.
+    ///                         Must be in the range 1–16,777,215.
     public init?(uintValue: UInt) {
         guard Self.isValid(uintValue)
         else { return nil }
@@ -30,17 +30,26 @@ public struct SMFTempo: UIntRepresentable {
 
 extension SMFTempo {
 
+    // MARK: Public Type Properties
+
+    /// The tempo assumed when a sequence does not specify one: 500,000
+    /// microseconds per quarter note, or 120 beats per minute (RP-001 p.5).
+    public static let `default` = Self(500_000)
+
     // MARK: Public Type Methods
 
     /// Returns a Boolean value indicating whether the provided value is a
     /// valid SMF tempo value.
     ///
+    /// A tempo of zero is not valid, because it would make a quarter note take
+    /// no time at all.
+    ///
     /// - Parameter uintValue:  The value to validate.
     ///
-    /// - Returns:  `true` if the value is in the range 0–16,777,215;
+    /// - Returns:  `true` if the value is in the range 1–16,777,215;
     ///             otherwise, `false`.
     public static func isValid(_ uintValue: UInt) -> Bool {
-        (0...16_777_215).contains(uintValue)
+        (1...16_777_215).contains(uintValue)
     }
 }
 

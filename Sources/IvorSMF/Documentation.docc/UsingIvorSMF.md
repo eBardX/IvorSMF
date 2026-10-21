@@ -52,6 +52,11 @@ reports each repair as an ``SMFParser/Diagnostic``:
 - ``SMFParser/Diagnostic/chunkLengthClamped(declared:available:)`` — a chunk’s
   declared length exceeded the remaining data, so it was clamped to what was
   available.
+- ``SMFParser/Diagnostic/dataAfterEndOfTrackSkipped(byteCount:)`` — a track
+  chunk had data after its End-of-Track event, so the extra bytes were skipped.
+- ``SMFParser/Diagnostic/invalidChunkTypeSkipped(_:)`` — a chunk’s type was not
+  four ASCII characters, so the chunk was skipped like any other unrecognized
+  chunk.
 - ``SMFParser/Diagnostic/metaEventLengthClamped(type:declared:expected:)`` — a
   recognized fixed-length meta-event declared more data bytes than its type
   defines, so the surplus bytes were ignored.
@@ -65,6 +70,9 @@ reports each repair as an ``SMFParser/Diagnostic``:
 - ``SMFParser/Diagnostic/truncatedEventSkipped`` — a track chunk ended partway
   through an event, so the incomplete event was skipped and the track ended
   there.
+- ``SMFParser/Diagnostic/unknownFormatReadAsFormat1(_:)`` — the header declared
+  a format other than 0, 1, or 2, so the tracks were read as format 1, as RP-001
+  allows.
 - ``SMFParser/Diagnostic/variableLengthQuantityClamped`` — a variable-length
   quantity exceeded the 0x0FFFFFFF maximum, so it was clamped to that maximum.
 
@@ -79,7 +87,12 @@ for diagnostic in diagnostics {
 
 The parser throws ``SMFParser/Error`` only when no sequence can be produced at
 all — for example a missing or truncated header chunk, or bytes that cannot be
-decoded as any recognized event. Deviations the model itself can represent —
+decoded as any recognized event.
+
+An 0xF7 system exclusive event is read as a
+``SMFSysExMessage/continuation(_:)`` packet while a multi-packet message is
+still open (that is, after a packet that does not end with 0xF7), and as an
+``SMFSysExMessage/escape(_:)`` otherwise. Deviations the model itself can represent —
 including a track with no terminal End-of-Track event, or a format 0 file with
 more than one track — are left intact by the parser, merely flagged with a
 diagnostic; they become an ``SMFNormalizer/Change`` and, if still present, an
@@ -113,39 +126,61 @@ Canonical form requires several things:
 1. Each track must have exactly one End-of-Track meta-event, as the final event,
    at a tick greater than or equal to every other event in the track. The
    normalizer brings every track into this form data-preservingly: it removes
-   all End-of-Track events, then appends a single one at the maximum remaining
-   event tick (or tick zero if the track is otherwise empty). No musical event
-   is ever dropped.
+   all End-of-Track events, then appends a single one at the latest tick of any
+   event in the track, including the removed End-of-Track events (or tick zero
+   if the track is otherwise empty). An End-of-Track gives a track its exact
+   length, so it is never moved earlier, and no musical event is ever dropped.
 2. A format 0 sequence must have exactly one track; a format 0 sequence with
    more than one track is reinterpreted as format 1, which has no such
    restriction.
-3. Within a track, a sequence-number meta-event must appear at time zero, and,
-   in a format 1 sequence with more than one track, tempo and time-signature
-   meta-events must appear only in the first track.
+3. Within a track, sequence-number, sequence/track-name, SMPTE-offset, and
+   device-name meta-events must appear at the start of the track: at time zero,
+   ahead of any transmittable (MIDI or system exclusive) event.
+4. In a format 1 sequence with more than one track, tempo, time-signature,
+   SMPTE-offset, and sequence-number meta-events must appear only in the first
+   track, which holds the tempo map.
+5. Every system exclusive message must end with 0xF7, and no transmittable event
+   may appear between the packets of a multi-packet message. An open message is
+   terminated by appending 0xF7 to its final packet when the track ends or
+   another transmittable event arrives; a continuation packet left with no
+   message to continue becomes the escape that a reader would take it for.
 
 ``SMFNormalizer/Change`` reports each fix applied:
 
 - **`coercedFormat(from:to:)`** — the sequence declared format 0 but had more
   than one track; it was reinterpreted as format 1. This is a sequence-wide
   change, so `trackIndex` is `nil`.
+- **`convertedSysExContinuationToEscape(trackIndex:)`** — the track had a
+  system exclusive continuation packet with no open message to continue; it was
+  converted to an escape.
 - **`insertedEndOfTrack(trackIndex:)`** — the track had no End-of-Track; one was
   appended.
+- **`relocatedDeviceName(trackIndex:)`**,
+  **`relocatedSequenceNumber(trackIndex:)`**,
+  **`relocatedSequenceTrackName(trackIndex:)`**, and
+  **`relocatedSMPTEOffset(trackIndex:)`** — the track had that meta-event
+  somewhere other than its start; it was moved to time zero, ahead of any
+  transmittable event.
 - **`relocatedEndOfTrack(trackIndex:)`** — the track had one or more
   End-of-Track events that were not already the sole final event (a premature
   End-of-Track with later events, and/or duplicates); they were consolidated
   into a single trailing one.
-- **`relocatedSequenceNumber(trackIndex:)`** — the track had a sequence-number
-  meta-event that did not appear at time zero; its time was reset to zero.
-- **`relocatedTempo(trackIndex:)`** — the track had a tempo meta-event, but the
-  sequence is format 1 with more than one track; the event was moved to track 0.
-- **`relocatedTimeSignature(trackIndex:)`** — the track had a time-signature
-  meta-event, but the sequence is format 1 with more than one track; the event
-  was moved to track 0.
+- **`relocatedSequenceNumberToFirstTrack(trackIndex:)`**,
+  **`relocatedSMPTEOffsetToFirstTrack(trackIndex:)`**,
+  **`relocatedTempo(trackIndex:)`**, and
+  **`relocatedTimeSignature(trackIndex:)`** — the track had that meta-event, but
+  the sequence is format 1 with more than one track; the event was moved to
+  track 0. If a moved event is later than track 0’s End-of-Track, track 0 also
+  reports `relocatedEndOfTrack(trackIndex:)`.
+- **`terminatedSysEx(trackIndex:)`** — the track had a system exclusive message
+  that did not end with 0xF7; 0xF7 was appended to its final packet.
 
 Normalization automatically fixes every ``SMFValidator/Issue`` case that has a
 deterministic fix, so a normalized sequence never has
-``SMFValidator/Issue/missingEndOfTrack(trackIndex:)`` or
-``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)``. Issues that require a
+``SMFValidator/Issue/missingEndOfTrack(trackIndex:)``,
+``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)``,
+``SMFValidator/Issue/unterminatedSysEx(trackIndex:)``, or
+``SMFValidator/Issue/orphanSysExContinuation(trackIndex:)``. Issues that require a
 judgment call, such as ``SMFValidator/Issue/unencodableText(trackIndex:)``, are
 left to ``SMFValidator`` and the caller — normalization never touches them.
 
@@ -176,9 +211,14 @@ Each ``SMFValidator/Issue`` has a ``SMFValidator/Issue/message`` and, except for
 the sequence-wide ``SMFValidator/Issue/invalidTrackCount(trackCount:format:)``,
 a ``SMFValidator/Issue/trackIndex``:
 
-- ``SMFValidator/Issue/missingEndOfTrack(trackIndex:)`` and
-  ``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)`` — a normalized
+- ``SMFValidator/Issue/missingEndOfTrack(trackIndex:)``,
+  ``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)``,
+  ``SMFValidator/Issue/unterminatedSysEx(trackIndex:)``, and
+  ``SMFValidator/Issue/orphanSysExContinuation(trackIndex:)`` — a normalized
   sequence never has these; ``SMFNormalizer`` clears them mechanically.
+- ``SMFValidator/Issue/invalidMetaEventType(trackIndex:)`` — an
+  ``SMFMetaMessage/unknown(_:_:)`` meta-event has a type byte of 0x80 or
+  greater, which RP-001 does not allow.
 - ``SMFValidator/Issue/invalidTrackCount(trackCount:format:)``,
   ``SMFValidator/Issue/deltaTimeTooLarge(trackIndex:)``, and
   ``SMFValidator/Issue/eventDataTooLarge(trackIndex:)`` — structural violations
@@ -202,8 +242,8 @@ If the sequence has not been validated, `format(_:)` throws
 formatting itself only fails on structurally unencodable content (a value out of
 range for its wire representation).
 
-The formatter emits a canonical wire form — maximal running status, minimal
-variable-length quantities, single-packet system exclusive data — so
+The formatter emits a canonical wire form — maximal running status and minimal
+variable-length quantities, with system exclusive packets written as given — so
 round-tripping is **semantic, not byte-exact**: `parse → normalize → validate →
 format` reproduces an equal ``SMFSequence`` (comparing `format`, `division`, and
 `tracks`; the two flags are metadata and excluded from `==`), but the bytes may
@@ -244,6 +284,17 @@ events by time on initialization, using a *stable* sort — same-tick event orde
 is part of a sequence’s meaning, so authored order among simultaneous events is
 preserved.
 
+A MIDI Channel Prefix meta-event associates a channel with the meta-events and
+system exclusive events that follow it, until the next MIDI event or prefix.
+Call ``SMFTrack/channel(forEventAt:)`` to find the channel associated with any
+event. When a sequence has no tempo or time signature, RP-001 assumes
+``SMFTempo/default`` (120 beats per minute) and ``SMFTimeSignature/default``
+(4/4).
+
+Text meta-events are decoded with the Windows-1252 character set, the RP-026
+default; ``SMFText/decodedString(using:)`` re-decodes a lyric written in another
+character set, such as Shift-JIS.
+
 ``SMFSequence`` equality and hashing compare `format`, `division`, and `tracks`
 only; `isNormalized` and `isValidated` are pipeline metadata and are excluded.
 
@@ -268,6 +319,28 @@ false` — exactly like one fresh out of the parser — so it must be run throug
 the normalizer and validator before formatting. This example’s
 track has no End-of-Track event, so `SMFNormalizer().normalize(_:)` will append
 one before `SMFValidator().validate(_:)` can succeed.
+
+IvorMIDI’s message builders plug straight in.
+``SMFEvent/midiEvents(for:at:)`` places a sequence of channel messages — such as
+the control changes that set a registered parameter — at one tick, in sending
+order. ``SMFSysExMessage/init(for:)`` wraps any `MIDISystemMessage`: a system
+exclusive message, such as one from IvorMIDI’s universal system exclusive
+builders, becomes a single complete packet, and a system common or real-time
+message becomes an escape. Going the other way,
+``SMFSysExMessage/systemMessage`` decodes a parsed event back into a
+`MIDISystemMessage`.
+
+```swift
+let bendRange = MIDIChannelMessage.registeredParameterChange(.pitchBendSensitivity,
+                                                             value: MIDIData2Value(msb: 12, lsb: 0),
+                                                             on: 1)
+
+let setup = SMFTrack(events: [.sysEx(0, SMFSysExMessage(for: .masterVolume(16_383)))]
+                             + SMFEvent.midiEvents(for: bendRange, at: 0))
+```
+
+Program numbers in `MIDIChannelMessage.programChange` are `MIDIProgram`
+values, numbered 1–128 like channels, so the wire byte `C0 05` is program 6.
 
 ## Error handling
 
@@ -323,9 +396,11 @@ try cleanData.write(to: outputURL)
 ```
 
 Because normalization mechanically clears
-``SMFValidator/Issue/missingEndOfTrack(trackIndex:)`` and
-``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)`` for every track, those
-two cases never appear here. Any issue that remains — most commonly
+``SMFValidator/Issue/missingEndOfTrack(trackIndex:)``,
+``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)``,
+``SMFValidator/Issue/unterminatedSysEx(trackIndex:)``, and
+``SMFValidator/Issue/orphanSysExContinuation(trackIndex:)`` for every track,
+those cases never appear here. Any issue that remains — most commonly
 ``SMFValidator/Issue/unencodableText(trackIndex:)`` — requires a judgment call
 the normalizer cannot make on its own, so this workflow reports it and stops
 rather than guessing at a fix.
@@ -335,11 +410,14 @@ The parser’s diagnostics are:
  Case                                                                          | Meaning
 :----                                                                          |:-------
  ``SMFParser/Diagnostic/chunkLengthClamped(declared:available:)``              | A chunk’s declared length exceeded the remaining data; clamped to what was available.
+ ``SMFParser/Diagnostic/dataAfterEndOfTrackSkipped(byteCount:)``               | A track chunk had data after its End-of-Track event; the extra bytes were skipped.
+ ``SMFParser/Diagnostic/invalidChunkTypeSkipped(_:)``                          | A chunk’s type was not four ASCII characters; the chunk was skipped.
  ``SMFParser/Diagnostic/metaEventLengthClamped(type:declared:expected:)``    | A recognized fixed-length meta-event declared more data bytes than its type defines; the surplus bytes were ignored.
  ``SMFParser/Diagnostic/metaEventLengthInvalid(type:declared:expected:)``    | A fixed-length meta-event declared fewer data bytes than its type defines; the event was retained as ``SMFMetaMessage/unknown(_:_:)``.
  ``SMFParser/Diagnostic/strayRealTimeByteSkipped``                             | A system real-time byte (0xF8–0xFE) appeared in the event stream and was discarded.
  ``SMFParser/Diagnostic/trackCountMismatch(declared:actual:)``                 | The header’s `ntrks` field did not match the number of MTrk chunks found.
  ``SMFParser/Diagnostic/truncatedEventSkipped``                                | A track chunk ended partway through an event; the incomplete event was skipped.
+ ``SMFParser/Diagnostic/unknownFormatReadAsFormat1(_:)``                       | The header declared a format other than 0, 1, or 2; the tracks were read as format 1.
  ``SMFParser/Diagnostic/variableLengthQuantityClamped``                        | A variable-length quantity exceeded the 0x0FFFFFFF maximum; clamped to that maximum.
 
 ## Concurrency

@@ -433,8 +433,9 @@ extension SMFMetaMessageTests {
 
         #expect(msg != nil)
 
-        if case let .sequencerSpecific(data) = msg {
-            #expect(data == [0x01, 0x02, 0x03])
+        if case let .sequencerSpecific(seqSpec) = msg {
+            #expect(seqSpec.manufacturerID == [0x01])
+            #expect(seqSpec.data == [0x02, 0x03])
         } else {
             Issue.record("Expected sequencerSpecific")
         }
@@ -546,6 +547,7 @@ extension SMFMetaMessageTests {
         let seqNum = SMFData2Value(uintValue: 0)!                    // swiftlint:disable:this force_unwrapping
         let channel = MIDIChannel(uintValue: 1)!                     // swiftlint:disable:this force_unwrapping
         let port = MIDIData1Value(uintValue: 0)!                     // swiftlint:disable:this force_unwrapping
+        let seqSpec = SMFSequencerSpecific(bytesValue: [0x01])!      // swiftlint:disable:this force_unwrapping
         let tempo = SMFTempo(uintValue: 500_000)!                    // swiftlint:disable:this force_unwrapping
         let offset = SMPTETime(frameRate: .fps24,
                                hour: 0,
@@ -569,7 +571,7 @@ extension SMFMetaMessageTests {
         #expect(SMFMetaMessage.midiPort(port).typeByte == 0x21)
         #expect(SMFMetaMessage.programName(text).typeByte == 0x08)
         #expect(SMFMetaMessage.sequenceNumber(seqNum).typeByte == 0x00)
-        #expect(SMFMetaMessage.sequencerSpecific([0x01]).typeByte == 0x7f)
+        #expect(SMFMetaMessage.sequencerSpecific(seqSpec).typeByte == 0x7f)
         #expect(SMFMetaMessage.sequenceTrackName(text).typeByte == 0x03)
         #expect(SMFMetaMessage.smpteOffset(offset).typeByte == 0x54)
         #expect(SMFMetaMessage.tempo(tempo).typeByte == 0x51)

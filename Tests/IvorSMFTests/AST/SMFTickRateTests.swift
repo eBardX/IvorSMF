@@ -13,7 +13,7 @@ struct SMFTickRateTests {
 extension SMFTickRateTests {
     @Test
     func bytesValue() {
-        #expect(SMFTickRate(uintValue: 0)?.bytesValue == [0x00, 0x00])
+        #expect(SMFTickRate(uintValue: 1)?.bytesValue == [0x00, 0x01])
         #expect(SMFTickRate(uintValue: 480)?.bytesValue == [0x01, 0xe0])
         #expect(SMFTickRate(uintValue: 32_767)?.bytesValue == [0x7f, 0xff])
     }
@@ -111,7 +111,8 @@ extension SMFTickRateTests {
 
     @Test
     func init_uintValue() {
-        #expect(SMFTickRate(uintValue: 0) != nil)
+        #expect(SMFTickRate(uintValue: 0) == nil)
+        #expect(SMFTickRate(uintValue: 1) != nil)
         #expect(SMFTickRate(uintValue: 480) != nil)
         #expect(SMFTickRate(uintValue: 32_767) != nil)
     }
@@ -123,7 +124,8 @@ extension SMFTickRateTests {
 
     @Test
     func isValid() {
-        #expect(SMFTickRate.isValid(0))
+        #expect(!SMFTickRate.isValid(0))
+        #expect(SMFTickRate.isValid(1))
         #expect(SMFTickRate.isValid(480))
         #expect(SMFTickRate.isValid(32_767))
         #expect(!SMFTickRate.isValid(32_768))

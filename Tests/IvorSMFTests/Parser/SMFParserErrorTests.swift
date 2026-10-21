@@ -32,13 +32,6 @@ extension SMFParserErrorTests {
     }
 
     @Test
-    func message_invalidChunkType() {
-        let error = SMFParser.Error.invalidChunkType("XXXX")
-
-        #expect(error.message.contains("XXXX"))
-    }
-
-    @Test
     func message_invalidDivision() {
         let error = SMFParser.Error.invalidDivision([0xe0, 0x00])
 
@@ -50,13 +43,6 @@ extension SMFParserErrorTests {
         let error = SMFParser.Error.invalidEventTime(0x80000000)
 
         #expect(error.message.contains("2147483648"))
-    }
-
-    @Test
-    func message_invalidFormat() {
-        let error = SMFParser.Error.invalidFormat([0x00, 0x03])
-
-        #expect(!error.message.isEmpty)
     }
 
     @Test

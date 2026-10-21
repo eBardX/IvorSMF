@@ -19,6 +19,27 @@ public enum SMFEvent {
 
 extension SMFEvent {
 
+    // MARK: Public Type Methods
+
+    /// Returns MIDI events that carry the provided channel messages, all at the
+    /// provided time, in the order given.
+    ///
+    /// Use this to place a sequence of messages that must be sent in order,
+    /// such as the control changes returned by IvorMIDI’s
+    /// `registeredParameterChange(_:value:on:)` and
+    /// `nonRegisteredParameterChange(_:value:on:)` builders. ``SMFTrack`` keeps
+    /// events at the same tick in the order given, so the sequence survives
+    /// sorting.
+    ///
+    /// - Parameter messages:   The channel messages, in sending order.
+    /// - Parameter eventTime:  The time of every returned event.
+    ///
+    /// - Returns:  One `.midi` event for each message.
+    public static func midiEvents(for messages: [MIDIChannelMessage],
+                                  at eventTime: SMFEventTime) -> [Self] {
+        messages.map { .midi(eventTime, $0) }
+    }
+
     // MARK: Public Instance Properties
 
     /// The absolute time of this event, measured in ticks from the
@@ -39,6 +60,19 @@ extension SMFEvent {
             true
         } else {
             false
+        }
+    }
+
+    // A transmittable event is one whose bytes are sent over MIDI: a MIDI
+    // event or a system exclusive event, but never a meta-event.
+    internal var isTransmittable: Bool {
+        switch self {
+        case .meta:
+            false
+
+        case .midi,
+             .sysEx:
+            true
         }
     }
 }

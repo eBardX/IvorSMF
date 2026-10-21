@@ -101,4 +101,22 @@ extension SMFEventTests {
 
         #expect(!SMFEvent.midi(t, msg).isEndOfTrack)
     }
+
+    @Test
+    func midiEvents_registeredParameterChange_keepsOrderThroughTrack() {
+        let t96 = SMFEventTime(uintValue: 96)!                      // swiftlint:disable:this force_unwrapping
+        let channel = MIDIChannel(uintValue: 1)!                    // swiftlint:disable:this force_unwrapping
+        let range = MIDIData2Value(uintValue: 12 << 7)!             // swiftlint:disable:this force_unwrapping
+        let noteOn = MIDIChannelMessage(statusByte: 0x90,
+                                        dataBytes: [0x3c, 0x64])!   // swiftlint:disable:this force_unwrapping
+        let messages = MIDIChannelMessage.registeredParameterChange(.pitchBendSensitivity,
+                                                                    value: range,
+                                                                    on: channel)
+        let events = SMFEvent.midiEvents(for: messages, at: t96)
+        let track = SMFTrack(events: [.midi(t96, noteOn)] + events)
+
+        #expect(events.count == messages.count)
+        #expect(events.allSatisfy { $0.eventTime == t96 })
+        #expect(Array(track.events.dropFirst()) == events)
+    }
 }

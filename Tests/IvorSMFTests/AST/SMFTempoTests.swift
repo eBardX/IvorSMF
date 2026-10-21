@@ -19,10 +19,15 @@ extension SMFTempoTests {
     }
 
     @Test
-    func bytesValue_zero() {
-        let tempo = SMFTempo(uintValue: 0)
+    func bytesValue_one() {
+        let tempo = SMFTempo(uintValue: 1)
 
-        #expect(tempo?.bytesValue == [0x00, 0x00, 0x00])
+        #expect(tempo?.bytesValue == [0x00, 0x00, 0x01])
+    }
+
+    @Test
+    func default_is120BPM() {
+        #expect(SMFTempo.default.uintValue == 500_000)
     }
 
     @Test
@@ -118,7 +123,8 @@ extension SMFTempoTests {
 
     @Test
     func init_uintValue() {
-        #expect(SMFTempo(uintValue: 0) != nil)
+        #expect(SMFTempo(uintValue: 0) == nil)
+        #expect(SMFTempo(uintValue: 1) != nil)
         #expect(SMFTempo(uintValue: 500_000) != nil)
         #expect(SMFTempo(uintValue: 16_777_215) != nil)
     }
@@ -130,7 +136,8 @@ extension SMFTempoTests {
 
     @Test
     func isValid() {
-        #expect(SMFTempo.isValid(0))
+        #expect(!SMFTempo.isValid(0))
+        #expect(SMFTempo.isValid(1))
         #expect(SMFTempo.isValid(500_000))
         #expect(SMFTempo.isValid(16_777_215))
         #expect(!SMFTempo.isValid(16_777_216))

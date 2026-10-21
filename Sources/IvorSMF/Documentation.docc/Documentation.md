@@ -85,6 +85,7 @@ handling.
 ### Event content
 
 - ``SMFMetaMessage``
+- ``SMFSequencerSpecific``
 - ``SMFSysExMessage``
 
 ### Time and division

@@ -33,16 +33,69 @@ extension SMFParserReaderTests {
     }
 
     @Test
-    func readSequence_invalidChunkType_throws() {
-        // Chunk id byte 0x80 is not ASCII, so the chunk type cannot be
-        // decoded even before the header is located.
-        let data = Data([0x80, 0x54, 0x68, 0x64])
+    func readSequence_dataAfterEndOfTrack_diagnostic() throws {
+        // Three bytes follow the End-of-Track event inside the track chunk.
+        var bytes = makeHeaderBytes(format: 0x0000, ntrks: 0x0001, division: 0x01e0)
 
-        #expect(throws: SMFParser.Error.invalidChunkType("\u{80}Thd")) {
-            var reader = SMFParser.Reader(data: data)
+        bytes += makeTrackBytes([0x00, 0xff, 0x2f, 0x00, 0x00, 0x90, 0x3c])
 
-            _ = try reader.readSequence()
-        }
+        var reader = SMFParser.Reader(data: Data(bytes))
+        let (sequence, diagnostics) = try reader.readSequence()
+
+        #expect(sequence.tracks[0].events == [.meta(.zero, .endOfTrack)])
+        #expect(diagnostics == [.dataAfterEndOfTrackSkipped(byteCount: 3)])
+    }
+
+    @Test
+    func readSequence_multiPacketSysEx_readsContinuations() throws {
+        // The multi-packet example from RP-001 p.7, followed by an F7 event
+        // after the message is complete, which must be read as an escape.
+        let content: [UInt8] = [0x00,
+                                0xf0,
+                                0x03,
+                                0x43,
+                                0x12,
+                                0x00,
+                                0x81,
+                                0x48,
+                                0xf7,
+                                0x06,
+                                0x43,
+                                0x12,
+                                0x00,
+                                0x43,
+                                0x12,
+                                0x00,
+                                0x64,
+                                0xf7,
+                                0x04,
+                                0x43,
+                                0x12,
+                                0x00,
+                                0xf7,
+                                0x00,
+                                0xf7,
+                                0x01,
+                                0xf8,
+                                0x00,
+                                0xff,
+                                0x2f,
+                                0x00]
+        var bytes = makeHeaderBytes(format: 0x0000, ntrks: 0x0001, division: 0x01e0)
+
+        bytes += makeTrackBytes(content)
+
+        var reader = SMFParser.Reader(data: Data(bytes))
+        let (sequence, diagnostics) = try reader.readSequence()
+        let t200 = SMFEventTime(uintValue: 200)!                    // swiftlint:disable:this force_unwrapping
+        let t300 = SMFEventTime(uintValue: 300)!                    // swiftlint:disable:this force_unwrapping
+
+        #expect(diagnostics.isEmpty)
+        #expect(sequence.tracks[0].events == [.sysEx(.zero, .systemExclusive([0x43, 0x12, 0x00])),
+                                              .sysEx(t200, .continuation([0x43, 0x12, 0x00, 0x43, 0x12, 0x00])),
+                                              .sysEx(t300, .continuation([0x43, 0x12, 0x00, 0xf7])),
+                                              .sysEx(t300, .escape([0xf8])),
+                                              .meta(t300, .endOfTrack)])
     }
 
     @Test

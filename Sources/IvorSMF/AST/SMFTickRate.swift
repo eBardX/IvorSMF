@@ -4,7 +4,7 @@ public import IvorMIDI
 public import XestiTools
 
 /// The number of MIDI ticks per quarter note for metrical time division
-/// (0–32,767).
+/// (1–32,767).
 public struct SMFTickRate: UIntRepresentable {
 
     // MARK: Public Initializers
@@ -13,7 +13,7 @@ public struct SMFTickRate: UIntRepresentable {
     /// `nil` if the value is not in the valid range.
     ///
     /// - Parameter uintValue:  The tick rate in ticks per quarter note.
-    ///                         Must be in the range 0–32,767.
+    ///                         Must be in the range 1–32,767.
     public init?(uintValue: UInt) {
         guard Self.isValid(uintValue)
         else { return nil }
@@ -36,12 +36,15 @@ extension SMFTickRate {
     /// Returns a Boolean value indicating whether the provided value is a
     /// valid SMF tick rate.
     ///
+    /// A tick rate of zero is not valid, because a quarter note would then
+    /// contain no ticks.
+    ///
     /// - Parameter uintValue:  The value to validate.
     ///
-    /// - Returns:  `true` if the value is in the range 0–32,767; otherwise,
+    /// - Returns:  `true` if the value is in the range 1–32,767; otherwise,
     ///             `false`.
     public static func isValid(_ uintValue: UInt) -> Bool {
-        (0...32_767).contains(uintValue)
+        (1...32_767).contains(uintValue)
     }
 }
 

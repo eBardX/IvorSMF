@@ -170,7 +170,7 @@ extension SMFNormalizerTests {
         #expect(events.contains(.midi(t96, noteOff)))
         #expect(events.filter(\.isEndOfTrack).count == 1)
         #expect(events.last?.isEndOfTrack == true)
-        #expect(events.last?.eventTime == t96)
+        #expect(events.last?.eventTime == t192)    // the later End-of-Track sets the track length
     }
 
     @Test
@@ -225,7 +225,8 @@ extension SMFNormalizerTests {
 
         #expect(changes.contains(.relocatedTempo(trackIndex: 1)))
         #expect(changes.contains(.relocatedTimeSignature(trackIndex: 1)))
-        #expect(changes.count == 2)
+        #expect(changes.contains(.relocatedEndOfTrack(trackIndex: 0)))   // track 0 gets longer
+        #expect(changes.count == 3)
         #expect(normalized.tracks[0].events == [.meta(t480, .tempo(tempo)),
                                                 .meta(t480, .timeSignature(timeSig)),
                                                 .meta(t480, .endOfTrack)])
@@ -246,7 +247,8 @@ extension SMFNormalizerTests {
                                    tracks: [track0, track1])
         let (normalized, changes) = SMFNormalizer().normalize(sequence)
 
-        #expect(changes == [.relocatedTempo(trackIndex: 1)])
+        #expect(changes == [.relocatedTempo(trackIndex: 1),
+                            .relocatedEndOfTrack(trackIndex: 0)])   // track 0 gets longer
         #expect(normalized.tracks[0].events == [.meta(t480, .tempo(tempo)),
                                                 .meta(t480, .endOfTrack)])
         #expect(normalized.tracks[1].events == [.meta(t480, .endOfTrack)])

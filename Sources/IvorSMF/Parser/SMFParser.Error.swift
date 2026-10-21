@@ -15,19 +15,11 @@ extension SMFParser {
         /// A MIDI channel message with an invalid status byte or data bytes.
         case invalidChannelMessage(UInt8, [UInt8])
 
-        /// A chunk type identifier that is not a valid four-character ASCII
-        /// string.
-        case invalidChunkType(String)
-
         /// A time division that cannot be decoded from its byte representation.
         case invalidDivision([UInt8])
 
         /// An event time value that exceeds the valid range.
         case invalidEventTime(UInt)
-
-        /// An SMF format value that cannot be decoded from its byte
-        /// representation.
-        case invalidFormat([UInt8])
 
         /// A meta-event with an unrecognized type byte or invalid data bytes.
         case invalidMetaMessage(UInt8, UInt8, [UInt8])
@@ -72,17 +64,11 @@ extension SMFParser.Error: EnhancedError {
         case let .invalidChannelMessage(status, data):
             "Invalid MIDI channel message, status: \(status.hex), data: \(data.hex)"
 
-        case let .invalidChunkType(chunkType):
-            "Invalid SMF chunk type: '\(chunkType)'"
-
         case let .invalidDivision(bytesValue):
             "Invalid SMF division: \(bytesValue.hex)"
 
         case let .invalidEventTime(eventTime):
             "Invalid SMF event time: \(eventTime)"
-
-        case let .invalidFormat(bytesValue):
-            "Invalid SMF format: \(bytesValue.hex)"
 
         case let .invalidMetaMessage(status, type, data):
             "Invalid SMF meta-event message, status: \(status.hex), type: \(type.hex), data: \(data.hex)"

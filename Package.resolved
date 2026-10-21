@@ -1,5 +1,5 @@
 {
-  "originHash" : "78abd07f7253ebe60ae470717a201b7ea013972c9f155b82ac34b7f0e5dbd769",
+  "originHash" : "974d79135f4f988e46c39befe48cf80cb0c932b200afed86c6b8accc9fbc59ea",
   "pins" : [
     {
       "identity" : "bigint",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/eBardX/IvorMIDI.git",
       "state" : {
-        "revision" : "0d83c46356254a7853ad83b32e6f5b424740438f",
-        "version" : "0.1.0"
+        "revision" : "96d85011bff159573a5d366e656e6907f6e6d692",
+        "version" : "0.3.0"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/eBardX/IvorSMPTE.git",
       "state" : {
-        "revision" : "b1c4593b5917807c5cdc0a5eeeb19fac0655b5ac",
-        "version" : "0.2.0"
+        "revision" : "bc2a594c2ee6f717cf35ebc5569e21b21945fff0",
+        "version" : "0.3.0"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/eBardX/XestiTools.git",
       "state" : {
-        "revision" : "35a4c43dde224aadcadad66dac7a35104537694d",
-        "version" : "10.0.0"
+        "revision" : "3dee54dd2f6b8732705e97ef9e3e1288d61002c9",
+        "version" : "10.1.0"
       }
     }
   ],

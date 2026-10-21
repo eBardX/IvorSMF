@@ -12,6 +12,14 @@ extension SMFParser {
         /// to the remaining bytes.
         case chunkLengthClamped(declared: UInt, available: UInt)
 
+        /// A track chunk had data after its End-of-Track meta-event; the extra
+        /// bytes were skipped.
+        case dataAfterEndOfTrackSkipped(byteCount: UInt)
+
+        /// A chunk’s type was not four ASCII characters; the chunk was skipped
+        /// like any other unrecognized chunk.
+        case invalidChunkTypeSkipped([UInt8])
+
         /// A recognized fixed-length meta-event declared more data bytes than
         /// its type defines; the surplus bytes were ignored (RP-001 p.7).
         case metaEventLengthClamped(type: UInt8, declared: UInt, expected: UInt)
@@ -32,6 +40,10 @@ extension SMFParser {
         /// was skipped and the track ended there.
         case truncatedEventSkipped
 
+        /// The header declared a format other than 0, 1, or 2; the tracks were
+        /// read as format 1 (RP-001 p.5).
+        case unknownFormatReadAsFormat1(UInt)
+
         /// A variable-length quantity exceeded the 0x0fffffff maximum defined by
         /// RP-001 (p.2) and was clamped to that maximum.
         case variableLengthQuantityClamped
@@ -50,6 +62,12 @@ extension SMFParser.Diagnostic {
         case let .chunkLengthClamped(declared, available):
             "Chunk length \(declared) exceeds available data; clamped to \(available)"
 
+        case let .dataAfterEndOfTrackSkipped(byteCount):
+            "Track chunk had \(byteCount) byte(s) after End-of-Track; skipped"
+
+        case let .invalidChunkTypeSkipped(bytes):
+            "Invalid chunk type \(bytes.hex); chunk skipped"
+
         case let .metaEventLengthClamped(type, declared, expected):
             "Meta-event 0x\(String(type, radix: 16)) declared \(declared) data byte(s); "
                 + "clamped to expected \(expected)"
@@ -66,6 +84,9 @@ extension SMFParser.Diagnostic {
 
         case .truncatedEventSkipped:
             "Track chunk ended partway through an event; incomplete event skipped"
+
+        case let .unknownFormatReadAsFormat1(format):
+            "Unknown format \(format); tracks read as format 1"
 
         case .variableLengthQuantityClamped:
             "Variable-length quantity exceeds 0x0fffffff; clamped to maximum"

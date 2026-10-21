@@ -47,6 +47,16 @@ extension SMFValidatorCheckerTests {
     }
 
     @Test
+    func checkSequence_invalidMetaEventType() {
+        let track = SMFTrack(events: [.meta(.zero, .unknown(0x80, [])),
+                                      .meta(.zero, .endOfTrack)])
+        let sequence = makeSequence(tracks: [track])
+        var checker = SMFValidator.Checker(sequence: sequence)
+
+        #expect(checker.checkSequence() == [.invalidMetaEventType(trackIndex: 0)])
+    }
+
+    @Test
     func checkSequence_invalidTrackCount_format0() {
         let sequence = makeSequence(tracks: [])
         var checker = SMFValidator.Checker(sequence: sequence)
@@ -77,6 +87,19 @@ extension SMFValidatorCheckerTests {
     }
 
     @Test
+    func checkSequence_multiPacketSysEx_noIssues() {
+        let t10 = SMFEventTime(uintValue: 10)!                      // swiftlint:disable:this force_unwrapping
+        let track = SMFTrack(events: [.sysEx(.zero, .systemExclusive([0x43])),
+                                      .sysEx(t10, .continuation([0x12, 0xf7])),
+                                      .sysEx(t10, .escape([0xf8])),
+                                      .meta(t10, .endOfTrack)])
+        let sequence = makeSequence(tracks: [track])
+        var checker = SMFValidator.Checker(sequence: sequence)
+
+        #expect(checker.checkSequence().isEmpty)
+    }
+
+    @Test
     func checkSequence_multipleIssues_accumulate() {
         let tBig = SMFEventTime(uintValue: 0x10000000)!             // swiftlint:disable:this force_unwrapping
         let tempo = SMFTempo(uintValue: 500_000)!                   // swiftlint:disable:this force_unwrapping
@@ -91,6 +114,16 @@ extension SMFValidatorCheckerTests {
     }
 
     @Test
+    func checkSequence_orphanSysExContinuation() {
+        let track = SMFTrack(events: [.sysEx(.zero, .continuation([0x12, 0xf7])),
+                                      .meta(.zero, .endOfTrack)])
+        let sequence = makeSequence(tracks: [track])
+        var checker = SMFValidator.Checker(sequence: sequence)
+
+        #expect(checker.checkSequence() == [.orphanSysExContinuation(trackIndex: 0)])
+    }
+
+    @Test
     func checkSequence_unencodableText() {
         let t0 = SMFEventTime(uintValue: 0)!                        // swiftlint:disable:this force_unwrapping
         let text = SMFText(stringValue: "\u{1F3B5}")!               // swiftlint:disable:this force_unwrapping
@@ -100,5 +133,28 @@ extension SMFValidatorCheckerTests {
         var checker = SMFValidator.Checker(sequence: sequence)
 
         #expect(checker.checkSequence() == [.unencodableText(trackIndex: 0)])
+    }
+
+    @Test
+    func checkSequence_unterminatedSysEx_atEndOfTrack() {
+        let track = SMFTrack(events: [.sysEx(.zero, .systemExclusive([0x43])),
+                                      .meta(.zero, .endOfTrack)])
+        let sequence = makeSequence(tracks: [track])
+        var checker = SMFValidator.Checker(sequence: sequence)
+
+        #expect(checker.checkSequence() == [.unterminatedSysEx(trackIndex: 0)])
+    }
+
+    @Test
+    func checkSequence_unterminatedSysEx_beforeMIDIEvent() {
+        let noteOn = MIDIChannelMessage(statusByte: 0x90,
+                                        dataBytes: [0x3c, 0x64])!   // swiftlint:disable:this force_unwrapping
+        let track = SMFTrack(events: [.sysEx(.zero, .systemExclusive([0x43])),
+                                      .midi(.zero, noteOn),
+                                      .meta(.zero, .endOfTrack)])
+        let sequence = makeSequence(tracks: [track])
+        var checker = SMFValidator.Checker(sequence: sequence)
+
+        #expect(checker.checkSequence() == [.unterminatedSysEx(trackIndex: 0)])
     }
 }

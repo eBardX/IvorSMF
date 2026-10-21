@@ -61,7 +61,7 @@ public enum SMFMetaMessage {
     case sequenceNumber(SMFData2Value)
 
     /// Sequencer-specific data.
-    case sequencerSpecific([UInt8])
+    case sequencerSpecific(SMFSequencerSpecific)
 
     /// A sequence or track name.
     case sequenceTrackName(SMFText)
@@ -142,8 +142,11 @@ public enum SMFMetaMessage {
 
             self = .keySignature(keySig)
 
-        case 0x7f where !dataBytes.isEmpty:
-            self = .sequencerSpecific(dataBytes)
+        case 0x7f:
+            guard let seqSpec = SMFSequencerSpecific(bytesValue: dataBytes)
+            else { return nil }
+
+            self = .sequencerSpecific(seqSpec)
 
         default:
             return nil
@@ -230,8 +233,8 @@ extension SMFMetaMessage {
         case let .sequenceNumber(seqNum):
             seqNum.bytesValue
 
-        case let .sequencerSpecific(dataBytes):
-            dataBytes
+        case let .sequencerSpecific(seqSpec):
+            seqSpec.bytesValue
 
         case let .smpteOffset(offset):
             offset.bytesValue

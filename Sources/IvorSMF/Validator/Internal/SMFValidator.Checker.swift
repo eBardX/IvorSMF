@@ -48,6 +48,11 @@ extension SMFValidator.Checker {
                                       at idx: Int) {
         switch event {
         case let .meta(_, message):
+            if let typeByte = message.typeByte,
+               typeByte >= 0x80 {
+                issues.append(.invalidMetaEventType(trackIndex: idx))
+            }
+
             if message.dataBytes == nil {
                 issues.append(.unencodableText(trackIndex: idx))
             } else if let dataBytes = message.dataBytes,
@@ -66,6 +71,44 @@ extension SMFValidator.Checker {
         }
     }
 
+    // RP-001 (p.6–7): every system exclusive message must end with 0xF7, no
+    // transmittable event may appear between the packets of a multi-packet
+    // message, and a continuation packet must have a message to continue.
+    private mutating func _checkSysExPackets(_ track: SMFTrack,
+                                             at idx: Int) {
+        var isOpen = false
+        var hasOrphan = false
+        var isUnterminated = false
+
+        for event in track.events {
+            switch event {
+            case let .sysEx(_, message):
+                if message.isContinuation {
+                    hasOrphan = hasOrphan || !isOpen
+                } else if isOpen {
+                    isUnterminated = true
+                }
+
+                isOpen = message.isOpenEnded
+
+            case .midi:
+                isUnterminated = isUnterminated || isOpen
+                isOpen = false
+
+            case .meta:
+                break
+            }
+        }
+
+        if isUnterminated || isOpen {
+            issues.append(.unterminatedSysEx(trackIndex: idx))
+        }
+
+        if hasOrphan {
+            issues.append(.orphanSysExContinuation(trackIndex: idx))
+        }
+    }
+
     private mutating func _checkTrack(_ track: SMFTrack,
                                       at idx: Int) {
         if let eotIndex = track.events.firstIndex(where: { $0.isEndOfTrack }) {
@@ -75,6 +118,8 @@ extension SMFValidator.Checker {
         } else {
             issues.append(.missingEndOfTrack(trackIndex: idx))
         }
+
+        _checkSysExPackets(track, at: idx)
 
         var previousTime: UInt = 0
 

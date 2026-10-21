@@ -19,6 +19,7 @@ extension SMFParser {
             self.data = data
             self.diagnostics = []
             self.runningStatus = 0
+            self.sysExIsOpen = false
         }
 
         // MARK: Private Instance Properties
@@ -31,6 +32,7 @@ extension SMFParser {
         private var currentTime: UInt
         private var diagnostics: [SMFParser.Diagnostic]
         private var runningStatus: UInt8
+        private var sysExIsOpen: Bool
     }
 }
 
@@ -41,16 +43,16 @@ extension SMFParser.Reader {
     // MARK: Internal Instance Methods
 
     internal mutating func readSequence() throws(SMFParser.Error) -> (SMFSequence, [SMFParser.Diagnostic]) {
-        guard let chunkType = try _readChunk(),
-              chunkType == .header
+        guard _hasMoreChunks(),
+              try _readChunk() == .header
         else { throw SMFParser.Error.missingHeaderChunk }
 
         let (format, ntrks, division) = try _readHeader()
 
         var tracks: [SMFTrack] = []
 
-        while let chunkType = try _readChunk() {
-            switch chunkType {
+        while _hasMoreChunks() {
+            switch try _readChunk() {
             case .header:
                 throw SMFParser.Error.tooManyHeaderChunks
 
@@ -58,7 +60,7 @@ extension SMFParser.Reader {
                 try tracks.append(_readTrack())
 
             default:
-                break   // ignore unknown chunks
+                break   // ignore unknown and invalid chunks
             }
 
             _skipExtraChunkData()
@@ -110,12 +112,16 @@ extension SMFParser.Reader {
         return dataBytes
     }
 
-    private mutating func _readChunk() throws(SMFParser.Error) -> SMFChunkType? {
+    private mutating func _hasMoreChunks() -> Bool {
         _skipExtraChunkData()
 
-        guard currentIndex < data.count
-        else { return nil }
+        return currentIndex < data.count
+    }
 
+    // Returns nil for a chunk whose type is not four ASCII characters; RP-001
+    // (p.3) says to treat unrecognized chunks as if they weren't there, so
+    // such a chunk is skipped rather than ending the parse.
+    private mutating func _readChunk() throws(SMFParser.Error) -> SMFChunkType? {
         chunkMode = false
 
         let chunkType = try _readChunkType()
@@ -133,6 +139,7 @@ extension SMFParser.Reader {
 
         currentTime = 0
         runningStatus = 0
+        sysExIsOpen = false
 
         return chunkType
     }
@@ -149,17 +156,16 @@ extension SMFParser.Reader {
         return chunkLength
     }
 
-    private mutating func _readChunkType() throws(SMFParser.Error) -> SMFChunkType {
-        var rawChunkType = ""
-
-        for _ in 0..<4 {
-            let byte = try _readByte()
-
-            rawChunkType.append(Character(Unicode.Scalar(byte)))
-        }
+    private mutating func _readChunkType() throws(SMFParser.Error) -> SMFChunkType? {
+        let bytes = try _readBytes(4)
+        let rawChunkType = String(bytes.map { Character(Unicode.Scalar($0)) })
 
         guard let chunkType = SMFChunkType(stringValue: rawChunkType)
-        else { throw SMFParser.Error.invalidChunkType(rawChunkType) }
+        else {
+            diagnostics.append(.invalidChunkTypeSkipped(bytes))
+
+            return nil
+        }
 
         return chunkType
     }
@@ -207,12 +213,20 @@ extension SMFParser.Reader {
         return eventTime
     }
 
+    // RP-001 (p.5): a reader encountering an unknown format may still read
+    // the track chunks as format 1 or 2. Format 1 is chosen, because its
+    // tracks are the most general.
     private mutating func _readFormat() throws(SMFParser.Error) -> SMFFormat {
         let byte0Value = try _readByte()
         let byte1Value = try _readByte()
+        let uintValue = UInt(byte0Value) << 8 | UInt(byte1Value)
 
-        guard let format = SMFFormat(bytesValue: [byte0Value, byte1Value])
-        else { throw SMFParser.Error.invalidFormat([byte0Value, byte1Value]) }
+        guard let format = SMFFormat(uintValue: uintValue)
+        else {
+            diagnostics.append(.unknownFormatReadAsFormat1(uintValue))
+
+            return .format1
+        }
 
         return format
     }
@@ -310,11 +324,15 @@ extension SMFParser.Reader {
         let count = try _readVarlen()
         let dataBytes = try _readBytes(count)
 
+        // RP-001 (p.7): an 0xF7 event is a continuation packet while a
+        // multi-packet message is open, and an escape otherwise.
         guard let message = SMFSysExMessage(statusByte: statusByte,
-                                            dataBytes: dataBytes)
+                                            dataBytes: dataBytes,
+                                            isContinuation: sysExIsOpen)
         else { throw SMFParser.Error.invalidSysExMessage(statusByte, dataBytes) }
 
         runningStatus = 0
+        sysExIsOpen = message.isOpenEnded
 
         return .sysEx(eventTime, message)
     }
@@ -338,6 +356,10 @@ extension SMFParser.Reader {
 
                 break   // skip to the end of this chunk only
             }
+        }
+
+        if chunkBytesLeft > 0 {
+            diagnostics.append(.dataAfterEndOfTrackSkipped(byteCount: chunkBytesLeft))
         }
 
         _skipExtraChunkData()

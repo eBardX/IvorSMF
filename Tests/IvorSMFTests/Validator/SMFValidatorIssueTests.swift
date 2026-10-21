@@ -50,6 +50,14 @@ extension SMFValidatorIssueTests {
     }
 
     @Test
+    func message_invalidMetaEventType() {
+        let issue = SMFValidator.Issue.invalidMetaEventType(trackIndex: 4)
+
+        #expect(issue.message.contains("4"))
+        #expect(issue.trackIndex == 4)
+    }
+
+    @Test
     func message_invalidTrackCount() {
         let issue = SMFValidator.Issue.invalidTrackCount(trackCount: 0,
                                                          format: .format0)
@@ -65,10 +73,26 @@ extension SMFValidatorIssueTests {
     }
 
     @Test
+    func message_orphanSysExContinuation() {
+        let issue = SMFValidator.Issue.orphanSysExContinuation(trackIndex: 5)
+
+        #expect(issue.message.contains("5"))
+        #expect(issue.trackIndex == 5)
+    }
+
+    @Test
     func message_unencodableText() {
         let issue = SMFValidator.Issue.unencodableText(trackIndex: 9)
 
         #expect(issue.message.contains("9"))
+    }
+
+    @Test
+    func message_unterminatedSysEx() {
+        let issue = SMFValidator.Issue.unterminatedSysEx(trackIndex: 6)
+
+        #expect(issue.message.contains("6"))
+        #expect(issue.trackIndex == 6)
     }
 
     @Test

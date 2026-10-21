@@ -2,6 +2,8 @@
 
 public import IvorMIDI
 
+private import XestiTools
+
 /// A musical time signature as stored in an SMF file.
 public struct SMFTimeSignature {
 
@@ -50,6 +52,21 @@ public struct SMFTimeSignature {
 
     /// The number of beats per measure.
     public let numerator: UInt
+}
+
+// MARK: -
+
+extension SMFTimeSignature {
+
+    // MARK: Public Type Properties
+
+    /// The time signature assumed when a sequence does not specify one: 4/4,
+    /// with a metronome click every 24 MIDI clocks and 8 notated 32nd notes per
+    /// MIDI quarter note (RP-001 p.5).
+    public static let `default` = Self(numerator: 4,
+                                       denominator: 2,
+                                       clockRate: 24,
+                                       beatRate: 8).require()
 }
 
 // MARK: - Equatable

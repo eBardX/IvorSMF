@@ -19,10 +19,23 @@ extension SMFTextTests {
     }
 
     @Test
-    func bytesValue_nonLatin1_returnsNil() {
+    func bytesValue_c1ControlWithWindows1252Glyph_returnsNil() {
+        // U+0093 is not in Windows-1252: byte 0x93 decodes to “ instead.
+        #expect(SMFText(stringValue: "\u{93}")?.bytesValue == nil)
+    }
+
+    @Test
+    func bytesValue_nonWindows1252_returnsNil() {
         let text = SMFText(stringValue: "café🎵")
 
         #expect(text?.bytesValue == nil)
+    }
+
+    @Test
+    func bytesValue_windows1252() {
+        let text = SMFText(stringValue: "“café” – €5")
+
+        #expect(text?.bytesValue == [0x93, 0x63, 0x61, 0x66, 0xe9, 0x94, 0x20, 0x96, 0x20, 0x80, 0x35])
     }
 
     @Test
@@ -53,6 +66,20 @@ extension SMFTextTests {
         #expect(low < high)
         #expect(!(high < low))
         #expect(!(low < low2))
+    }
+
+    @Test
+    func decodedString_shiftJIS() {
+        let text = SMFText(bytesValue: [0x82, 0xa0])                // “あ” in Shift-JIS
+
+        #expect(text?.decodedString(using: .shiftJIS) == "あ")
+    }
+
+    @Test
+    func decodedString_utf16WithByteOrderMark() {
+        let text = SMFText(bytesValue: [0xff, 0xfe, 0x42, 0x30])    // BOM + “あ” in UTF-16LE
+
+        #expect(text?.decodedString(using: .utf16) == "あ")
     }
 
     @Test
@@ -103,6 +130,13 @@ extension SMFTextTests {
     }
 
     @Test
+    func init_bytesValue_windows1252() {
+        let text = SMFText(bytesValue: [0x93, 0x48, 0x69, 0x94, 0x99])
+
+        #expect(text?.stringValue == "“Hi”™")
+    }
+
+    @Test
     func init_stringLiteral() {
         let text: SMFText = "Hello"
 
@@ -135,5 +169,12 @@ extension SMFTextTests {
         let roundTripped = bytes.flatMap { SMFText(bytesValue: $0) }
 
         #expect(roundTripped?.stringValue == "Test 123")
+    }
+
+    @Test
+    func roundTrip_allByteValues() {
+        let bytes = (0...255).map { UInt8($0) }
+
+        #expect(SMFText(bytesValue: bytes)?.bytesValue == bytes)
     }
 }

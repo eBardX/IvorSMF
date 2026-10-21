@@ -231,13 +231,29 @@ extension SMFParserTests {
     }
 
     @Test
-    func parse_invalidChunkType_throws() {
-        // Chunk id byte 0x80 is not ASCII, so the chunk type cannot be
-        // decoded even before the header is located.
-        let data = Data([0x80, 0x54, 0x68, 0x64])
+    func parse_invalidChunkType_skipsChunk() throws {
+        // A chunk whose id contains the non-ASCII byte 0x80 is skipped like
+        // any other unrecognized chunk.
+        var bytes = makeHeaderBytes(format: 0x0000, ntrks: 0x0001, division: 0x01e0)
 
-        #expect(throws: SMFParser.Error.invalidChunkType("\u{80}Thd")) {
-            try SMFParser().parse(data)
+        bytes += [0x80, 0x54, 0x72, 0x6b, 0x00, 0x00, 0x00, 0x02, 0xaa, 0xbb]
+        bytes += makeTrackBytes([0x00, 0xff, 0x2f, 0x00])
+
+        let (sequence, diagnostics) = try SMFParser().parse(Data(bytes))
+
+        #expect(sequence.tracks == [SMFTrack(events: [.meta(.zero, .endOfTrack)])])
+        #expect(diagnostics == [.invalidChunkTypeSkipped([0x80, 0x54, 0x72, 0x6b])])
+    }
+
+    @Test
+    func parse_invalidHeaderChunkType_throws() {
+        // A first chunk whose id is not ASCII cannot be the header chunk.
+        var bytes = makeHeaderBytes(format: 0x0000, ntrks: 0x0001, division: 0x01e0)
+
+        bytes[0] = 0x80
+
+        #expect(throws: SMFParser.Error.missingHeaderChunk) {
+            try SMFParser().parse(Data(bytes))
         }
     }
 
@@ -297,20 +313,18 @@ extension SMFParserTests {
     }
 
     @Test
-    func parse_invalidFormat_throws() {
-        // Format value 3 is not a valid SMF format (only 0, 1, and 2 are
-        // defined).
-        var bytes: [UInt8] = []
+    func parse_unknownFormat_readsAsFormat1() throws {
+        // Format value 3 is not defined; RP-001 lets a reader read the tracks
+        // as format 1 anyway.
+        var bytes = makeHeaderBytes(format: 0x0003, ntrks: 0x0001, division: 0x01e0)
 
-        bytes += [0x4d, 0x54, 0x68, 0x64]
-        bytes += [0x00, 0x00, 0x00, 0x06]
-        bytes += [0x00, 0x03]
-        bytes += [0x00, 0x01]
-        bytes += [0x01, 0xe0]
+        bytes += makeTrackBytes([0x00, 0xff, 0x2f, 0x00])
 
-        #expect(throws: SMFParser.Error.invalidFormat([0x00, 0x03])) {
-            try SMFParser().parse(Data(bytes))
-        }
+        let (sequence, diagnostics) = try SMFParser().parse(Data(bytes))
+
+        #expect(sequence.format == .format1)
+        #expect(sequence.tracks.count == 1)
+        #expect(diagnostics == [.unknownFormatReadAsFormat1(3)])
     }
 
     @Test
@@ -377,10 +391,10 @@ extension SMFParserTests {
             Issue.record("Expected systemExclusive at events[0]")
         }
 
-        if case let .sysEx(_, .escape(data)) = sequence.tracks[0].events[1] {
+        if case let .sysEx(_, .continuation(data)) = sequence.tracks[0].events[1] {
             #expect(data == [0x02, 0xf7])
         } else {
-            Issue.record("Expected escape at events[1]")
+            Issue.record("Expected continuation at events[1]")
         }
 
         let reformatted = try SMFFormatter().format(makeValidatedSequence(sequence))

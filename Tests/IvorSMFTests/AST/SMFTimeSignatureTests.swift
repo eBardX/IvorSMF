@@ -20,6 +20,13 @@ extension SMFTimeSignatureTests {
     }
 
     @Test
+    func default_is4_4() {
+        let timeSig = SMFTimeSignature.default
+
+        #expect(timeSig.bytesValue == [0x04, 0x02, 0x18, 0x08])
+    }
+
+    @Test
     func equality() {
         let timeSig1 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
         let timeSig2 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping

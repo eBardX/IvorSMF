@@ -11,6 +11,29 @@ struct SMFTrackTests {
 
 extension SMFTrackTests {
     @Test
+    func channel_forEventAt() {
+        let channel2 = MIDIChannel(uintValue: 2)!                   // swiftlint:disable:this force_unwrapping
+        let channel3 = MIDIChannel(uintValue: 3)!                   // swiftlint:disable:this force_unwrapping
+        let name = SMFText(stringValue: "Strings")!                 // swiftlint:disable:this force_unwrapping
+        let noteOn = MIDIChannelMessage(statusByte: 0x92,
+                                        dataBytes: [0x3c, 0x64])!   // swiftlint:disable:this force_unwrapping
+        let track = SMFTrack(events: [.meta(.zero, .instrumentName(name)),
+                                      .meta(.zero, .midiChannelPrefix(channel2)),
+                                      .meta(.zero, .instrumentName(name)),
+                                      .sysEx(.zero, .systemExclusive([0x7e, 0xf7])),
+                                      .midi(.zero, noteOn),
+                                      .meta(.zero, .instrumentName(name)),
+                                      .meta(.zero, .endOfTrack)])
+
+        #expect(track.channel(forEventAt: 0) == nil)       // before any prefix
+        #expect(track.channel(forEventAt: 1) == channel2)  // the prefix itself
+        #expect(track.channel(forEventAt: 2) == channel2)
+        #expect(track.channel(forEventAt: 3) == channel2)
+        #expect(track.channel(forEventAt: 4) == channel3)  // a MIDI event’s own channel
+        #expect(track.channel(forEventAt: 5) == nil)       // the MIDI event ended the prefix
+    }
+
+    @Test
     func equality() {
         let t0 = SMFEventTime(uintValue: 0)!                        // swiftlint:disable:this force_unwrapping
         let track1 = SMFTrack(events: [.meta(t0, .endOfTrack)])

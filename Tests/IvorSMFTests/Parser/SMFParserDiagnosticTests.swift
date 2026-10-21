@@ -32,6 +32,20 @@ extension SMFParserDiagnosticTests {
     }
 
     @Test
+    func message_dataAfterEndOfTrackSkipped() {
+        let diagnostic = SMFParser.Diagnostic.dataAfterEndOfTrackSkipped(byteCount: 17)
+
+        #expect(diagnostic.message.contains("17"))
+    }
+
+    @Test
+    func message_invalidChunkTypeSkipped() {
+        let diagnostic = SMFParser.Diagnostic.invalidChunkTypeSkipped([0x80, 0x54, 0x72, 0x6b])
+
+        #expect(diagnostic.message.contains("80 54 72 6B"))
+    }
+
+    @Test
     func message_metaEventLengthClamped() {
         let diagnostic = SMFParser.Diagnostic.metaEventLengthClamped(type: 0x51,
                                                                      declared: 4,
@@ -69,6 +83,11 @@ extension SMFParserDiagnosticTests {
     @Test
     func message_truncatedEventSkipped() {
         #expect(!SMFParser.Diagnostic.truncatedEventSkipped.message.isEmpty)
+    }
+
+    @Test
+    func message_unknownFormatReadAsFormat1() {
+        #expect(SMFParser.Diagnostic.unknownFormatReadAsFormat1(3).message.contains("3"))
     }
 
     @Test
