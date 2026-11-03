@@ -20,8 +20,14 @@ Events](https://midi.org/smf-device-name-and-program-name-meta-events), and
 Extensions](https://midi.org/smf-language-and-display-extensions), with a
 strict-concurrency-ready, value-type API.
 
-IvorSMF builds on two companion packages: IvorMIDI supplies the MIDI channel
-messages carried by MIDI events, and IvorSMPTE supplies the SMPTE frame rates
+IvorSMF’s syntactic core turns Standard MIDI File bytes into a typed,
+round-trippable abstract syntax tree (``SMFSequence`` → ``SMFTrack`` →
+``SMFEvent``) and back to bytes, without interpreting the music.
+
+IvorSMF builds on two companion packages:
+[IvorMIDI](https://github.com/eBardX/IvorMIDI) supplies the MIDI channel
+messages carried by MIDI events, and
+[IvorSMPTE](https://github.com/eBardX/IvorSMPTE) supplies the SMPTE frame rates
 and timecode values used by timecode-based time divisions and SMPTE offset
 meta-events.
 
@@ -30,12 +36,12 @@ meta-events.
 Everything flows through a small, explicit pipeline of four value types, each a
 `Sendable` value type with a no-argument initializer:
 
- Stage     | Type               | Input → Output
-:-----     |:----               |:--------------
- Parse     | ``SMFParser``      | `Data` → ``SMFSequence``
- Normalize | ``SMFNormalizer``  | ``SMFSequence`` → ``SMFSequence`` (canonical)
- Validate  | ``SMFValidator``   | ``SMFSequence`` → validated ``SMFSequence``
- Format    | ``SMFFormatter``   | ``SMFSequence`` → `Data`
+ Stage     | Type              | Input → Output
+:-----     |:----              |:--------------
+ Parse     | ``SMFParser``     | `Data` → ``SMFSequence``
+ Normalize | ``SMFNormalizer`` | ``SMFSequence`` → ``SMFSequence`` (canonical)
+ Validate  | ``SMFValidator``  | ``SMFSequence`` → validated ``SMFSequence``
+ Format    | ``SMFFormatter``  | ``SMFSequence`` → `Data`
 
 An ``SMFSequence`` carries two Boolean state flags that enforce the order of the
 pipeline: a sequence must be normalized before it can be validated, and
@@ -52,10 +58,8 @@ let (parsed, diagnostics) = try SMFParser().parse(data)
 let (normalized, changes) = SMFNormalizer().normalize(parsed)
 let (validated, issues)   = try SMFValidator().validate(normalized)
 
-guard issues.isEmpty else {
-    issues.forEach { print($0.message) }
-    return
-}
+guard issues.isEmpty
+else { issues.forEach { print($0.message) }; return }
 
 let output = try SMFFormatter().format(validated)  // back to SMF
 ```
@@ -76,7 +80,7 @@ handling.
 - ``SMFValidator``
 - ``SMFFormatter``
 
-### Sequence model
+### Sequences
 
 - ``SMFSequence``
 - ``SMFTrack``

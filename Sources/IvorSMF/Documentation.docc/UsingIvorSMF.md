@@ -24,9 +24,9 @@ pipeline:
 So the canonical order is **parse → normalize → validate → format**:
 
 ```swift
-let (parsed, diagnostics)  = try SMFParser().parse(data)
-let (normalized, changes)  = SMFNormalizer().normalize(parsed)
-let (validated, issues)    = try SMFValidator().validate(normalized)
+let (parsed, diagnostics) = try SMFParser().parse(data)
+let (normalized, changes) = SMFNormalizer().normalize(parsed)
+let (validated, issues)   = try SMFValidator().validate(normalized)
 
 guard issues.isEmpty
 else { /* handle issues */ return }
@@ -296,7 +296,8 @@ default; ``SMFText/decodedString(using:)`` re-decodes a lyric written in another
 character set, such as Shift-JIS.
 
 ``SMFSequence`` equality and hashing compare `format`, `division`, and `tracks`
-only; `isNormalized` and `isValidated` are pipeline metadata and are excluded.
+only; the `isNormalized` and `isValidated` flags are metadata and are
+excluded.
 
 ## Building a sequence programmatically
 
@@ -315,9 +316,9 @@ let sequence = SMFSequence(format: .format0,
 ```
 
 A directly-constructed sequence has `isNormalized == false` and `isValidated ==
-false` — exactly like one fresh out of the parser — so it must be run through
-the normalizer and validator before formatting. This example’s
-track has no End-of-Track event, so `SMFNormalizer().normalize(_:)` will append
+false` — exactly like one fresh out of the parser — so you must run it through
+the normalizer and validator before formatting. This example’s track has no
+End-of-Track event, so `SMFNormalizer().normalize(_:)` will append
 one before `SMFValidator().validate(_:)` can succeed.
 
 IvorMIDI’s message builders plug straight in.
@@ -354,14 +355,19 @@ Thrown errors conform to `EnhancedError` (from
  ``SMFValidator/Error`` | `SMFValidator.validate(_:)`
  ``SMFFormatter/Error`` | `SMFFormatter.format(_:)`
 
+`SMFNormalizer.normalize(_:)` never throws — normalization has no failure mode.
+
 Non-fatal results are returned rather than thrown, and each also provides a
 `message`:
 
- Type                     | Returned by     | Also
-:----                     |:-----------     |:-----
- ``SMFParser/Diagnostic`` | `parse(_:)`     | —
- ``SMFNormalizer/Change`` | `normalize(_:)` | `trackIndex` (`Int?`)
- ``SMFValidator/Issue``   | `validate(_:)`  | `trackIndex` (`Int?`)
+ Type                     | Returned by
+:----                     |:-----------
+ ``SMFParser/Diagnostic`` | `parse(_:)`
+ ``SMFNormalizer/Change`` | `normalize(_:)`
+ ``SMFValidator/Issue``   | `validate(_:)`
+
+``SMFNormalizer/Change`` and ``SMFValidator/Issue`` also expose a `trackIndex`
+(`Int?`): the track the result applies to, or `nil` for a sequence-wide one.
 
 ## Recovering from real-world deviations
 
@@ -404,21 +410,6 @@ those cases never appear here. Any issue that remains — most commonly
 ``SMFValidator/Issue/unencodableText(trackIndex:)`` — requires a judgment call
 the normalizer cannot make on its own, so this workflow reports it and stops
 rather than guessing at a fix.
-
-The parser’s diagnostics are:
-
- Case                                                                          | Meaning
-:----                                                                          |:-------
- ``SMFParser/Diagnostic/chunkLengthClamped(declared:available:)``              | A chunk’s declared length exceeded the remaining data; clamped to what was available.
- ``SMFParser/Diagnostic/dataAfterEndOfTrackSkipped(byteCount:)``               | A track chunk had data after its End-of-Track event; the extra bytes were skipped.
- ``SMFParser/Diagnostic/invalidChunkTypeSkipped(_:)``                          | A chunk’s type was not four ASCII characters; the chunk was skipped.
- ``SMFParser/Diagnostic/metaEventLengthClamped(type:declared:expected:)``    | A recognized fixed-length meta-event declared more data bytes than its type defines; the surplus bytes were ignored.
- ``SMFParser/Diagnostic/metaEventLengthInvalid(type:declared:expected:)``    | A fixed-length meta-event declared fewer data bytes than its type defines; the event was retained as ``SMFMetaMessage/unknown(_:_:)``.
- ``SMFParser/Diagnostic/strayRealTimeByteSkipped``                             | A system real-time byte (0xF8–0xFE) appeared in the event stream and was discarded.
- ``SMFParser/Diagnostic/trackCountMismatch(declared:actual:)``                 | The header’s `ntrks` field did not match the number of MTrk chunks found.
- ``SMFParser/Diagnostic/truncatedEventSkipped``                                | A track chunk ended partway through an event; the incomplete event was skipped.
- ``SMFParser/Diagnostic/unknownFormatReadAsFormat1(_:)``                       | The header declared a format other than 0, 1, or 2; the tracks were read as format 1.
- ``SMFParser/Diagnostic/variableLengthQuantityClamped``                        | A variable-length quantity exceeded the 0x0FFFFFFF maximum; clamped to that maximum.
 
 ## Concurrency
 

@@ -26,6 +26,10 @@ Definition][rp017], [RP-019 SMF Device Name and Program Name Meta
 Events][rp019], and [RP-026 SMF Language and Display Extensions][rp026], with a
 strict-concurrency-ready, value-type API.
 
+IvorSMF's syntactic core turns Standard MIDI File bytes into a typed,
+round-trippable abstract syntax tree (`SMFSequence` → `SMFTrack` → `SMFEvent`)
+and back to bytes, without interpreting the music.
+
 IvorSMF builds on two companion packages: [IvorMIDI][ivormidi] supplies the
 MIDI channel messages carried by MIDI events, and [IvorSMPTE][ivorsmpte]
 supplies the SMPTE frame rates and timecode values used by timecode-based time
@@ -63,7 +67,7 @@ To add IvorSMF to a Swift package, add it to the `dependencies` in your
 ```swift
 dependencies: [
     .package(url: "https://github.com/eBardX/IvorSMF.git",
-             .upToNextMinor(from: "0.1.0"))
+             .upToNextMinor(from: "0.4.0"))
 ]
 ```
 
@@ -87,7 +91,8 @@ IvorSMF depends on [IvorMIDI][ivormidi], [IvorSMPTE][ivorsmpte], and
 
 ## <a name="quick_start">Quick Start</a>
 
-Take an SMF file from `Data` all the way back to `Data`:
+Take a Standard MIDI File from `Data` through the full pipeline and back to
+`Data`:
 
 ```swift
 import Foundation
@@ -95,8 +100,7 @@ import IvorSMF
 
 let data = try Data(contentsOf: url)
 
-// 1. Parse raw bytes into a typed sequence. Always tolerant — recoverable
-//    deviations are reported as diagnostics rather than thrown.
+// 1. Parse SMF bytes into a typed AST.
 let (parsed, diagnostics) = try SMFParser().parse(data)
 
 // 2. Normalize to canonical form (a single trailing End-of-Track per track).
@@ -108,20 +112,20 @@ let (validated, issues) = try SMFValidator().validate(normalized)
 guard issues.isEmpty
 else { issues.forEach { print($0.message) }; return }
 
-// 4. Format back to binary data.
+// 4. Format back to SMF bytes.
 let output = try SMFFormatter().format(validated)
 ```
 
-Each stage is independent, so you can stop at the AST or round-trip through the
-formatter. For the complete story — the AST models and error handling — see the
-[usage guide][guide].
+Each stage is independent, so you can stop at the AST or round-trip through
+the formatter. For the complete story — the AST model and error handling — see
+the [usage guide][guide].
 
 ## <a name="documentation">Documentation</a>
 
 * [Using IvorSMF][guide] — a guide to using the public API, published as part
   of the DocC documentation.
 * Every public declaration carries a DocC comment; a few call out the
-  relevant page of the [RP-001 specification][smf] where a clamping or other
+  relevant page of the [RP-001 specification][rp001] where a clamping or other
   spec-mandated behavior needs justification.
 
 ## <a name="reference_documentation">Reference Documentation</a>
@@ -142,10 +146,10 @@ IvorSMF is available under [the MIT license][license].
 [ivorsmpte]:    https://github.com/eBardX/IvorSMPTE
 [license]:      https://github.com/eBardX/IvorSMF/blob/main/LICENSE.md
 [refdoc]:       https://eBardX.github.io/ivor-packages-docs/documentation/ivorsmf
-[rp001]:	    https://midi.org/standard-midi-files-specification
-[rp017]:	    https://midi.org/smf-lyric-meta-event-definition
-[rp019]:	    https://midi.org/smf-device-name-and-program-name-meta-events
-[rp026]:	    https://midi.org/smf-language-and-display-extensions
+[rp001]:        https://midi.org/standard-midi-files-specification
+[rp017]:        https://midi.org/smf-lyric-meta-event-definition
+[rp019]:        https://midi.org/smf-device-name-and-program-name-meta-events
+[rp026]:        https://midi.org/smf-language-and-display-extensions
 [smf]:          https://midi.org/standard-midi-files
 [spm]:          https://swift.org/package-manager/
 [xestitools]:   https://github.com/eBardX/XestiTools
