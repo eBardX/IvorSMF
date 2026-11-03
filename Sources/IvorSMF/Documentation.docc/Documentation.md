@@ -107,3 +107,4 @@ handling.
 - ``SMFText``
 - ``SMFData2Value``
 - ``SMFFormat``
+- ``SMFChunkType``

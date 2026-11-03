@@ -89,14 +89,14 @@ The parser throws ``SMFParser/Error`` only when no sequence can be produced at
 all — for example a missing or truncated header chunk, or bytes that cannot be
 decoded as any recognized event.
 
-An 0xF7 system exclusive event is read as a
-``SMFSysExMessage/continuation(_:)`` packet while a multi-packet message is
-still open (that is, after a packet that does not end with 0xF7), and as an
-``SMFSysExMessage/escape(_:)`` otherwise. Deviations the model itself can represent —
-including a track with no terminal End-of-Track event, or a format 0 file with
-more than one track — are left intact by the parser, merely flagged with a
-diagnostic; they become an ``SMFNormalizer/Change`` and, if still present, an
-``SMFValidator/Issue`` further down the pipeline, not a parse-time concern.
+An 0xF7 system exclusive event is read as a ``SMFSysExMessage/continuation(_:)``
+packet while a multi-packet message is still open (that is, after a packet that
+does not end with 0xF7), and as an ``SMFSysExMessage/escape(_:)`` otherwise.
+Deviations the model itself can represent — including a track with no terminal
+End-of-Track event, or a format 0 file with more than one track — are left
+intact by the parser, merely flagged with a diagnostic; they become an
+``SMFNormalizer/Change`` and, if still present, an ``SMFValidator/Issue``
+further down the pipeline, not a parse-time concern.
 
 ```swift
 do {
@@ -180,9 +180,9 @@ deterministic fix, so a normalized sequence never has
 ``SMFValidator/Issue/missingEndOfTrack(trackIndex:)``,
 ``SMFValidator/Issue/eventAfterEndOfTrack(trackIndex:)``,
 ``SMFValidator/Issue/unterminatedSysEx(trackIndex:)``, or
-``SMFValidator/Issue/orphanSysExContinuation(trackIndex:)``. Issues that require a
-judgment call, such as ``SMFValidator/Issue/unencodableText(trackIndex:)``, are
-left to ``SMFValidator`` and the caller — normalization never touches them.
+``SMFValidator/Issue/orphanSysExContinuation(trackIndex:)``. Issues that require
+a judgment call, such as ``SMFValidator/Issue/unencodableText(trackIndex:)``,
+are left to ``SMFValidator`` and the caller — normalization never touches them.
 
 ## Validating
 
