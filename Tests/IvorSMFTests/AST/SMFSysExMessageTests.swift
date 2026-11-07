@@ -101,10 +101,11 @@ extension SMFSysExMessageTests {
     }
 
     @Test
-    func init_systemMessage_universalBuilder_becomesSystemExclusive() {
+    func init_systemMessage_universalMessage_becomesSystemExclusive() throws {
         let volume = MIDIData2Value(uintValue: 16_383)!             // swiftlint:disable:this force_unwrapping
+        let message = try #require(MIDIDeviceControlMessage(content: .masterVolume(volume)).systemMessage)
 
-        #expect(SMFSysExMessage(for: .masterVolume(volume)) == .systemExclusive([0x7f, 0x7f, 0x04, 0x01, 0x7f, 0x7f, 0xf7]))
+        #expect(SMFSysExMessage(for: message) == .systemExclusive([0x7f, 0x7f, 0x04, 0x01, 0x7f, 0x7f, 0xf7]))
     }
 
     @Test
@@ -159,9 +160,10 @@ extension SMFSysExMessageTests {
     }
 
     @Test
-    func systemMessage_roundTrip() {
+    func systemMessage_roundTrip() throws {
         let volume = MIDIData2Value(uintValue: 8_192)!              // swiftlint:disable:this force_unwrapping
-        let messages: [MIDISystemMessage] = [.masterVolume(volume), .start, .tuneRequest]
+        let volumeMessage = try #require(MIDIDeviceControlMessage(content: .masterVolume(volume)).systemMessage)
+        let messages: [MIDISystemMessage] = [volumeMessage, .start, .tuneRequest]
 
         for message in messages {
             #expect(SMFSysExMessage(for: message).systemMessage == message)

@@ -151,7 +151,8 @@ extension SMFFormatterTests {
         let t96 = SMFEventTime(uintValue: 96)!                      // swiftlint:disable:this force_unwrapping
         let volume = MIDIData2Value(uintValue: 12_000)!             // swiftlint:disable:this force_unwrapping
         let position = MIDIData2Value(uintValue: 64)!               // swiftlint:disable:this force_unwrapping
-        let track = SMFTrack(events: [.sysEx(.zero, SMFSysExMessage(for: .masterVolume(volume))),
+        let volumeMessage = try #require(MIDIDeviceControlMessage(content: .masterVolume(volume)).systemMessage)
+        let track = SMFTrack(events: [.sysEx(.zero, SMFSysExMessage(for: volumeMessage)),
                                       .sysEx(t96, SMFSysExMessage(for: .songPosition(position))),
                                       .meta(t96, .endOfTrack)])
         let data = try SMFFormatter().format(makeValidatedSequence(makeSequence(tracks: [track])))
@@ -167,6 +168,6 @@ extension SMFFormatterTests {
             return message.systemMessage
         }
 
-        #expect(systemMessages == [.masterVolume(volume), .songPosition(position)])
+        #expect(systemMessages == [volumeMessage, .songPosition(position)])
     }
 }

@@ -336,7 +336,9 @@ let bendRange = MIDIChannelMessage.registeredParameterChange(.pitchBendSensitivi
                                                              value: MIDIData2Value(msb: 12, lsb: 0),
                                                              on: 1)
 
-let setup = SMFTrack(events: [.sysEx(0, SMFSysExMessage(for: .masterVolume(16_383)))]
+let volume = MIDIDeviceControlMessage(content: .masterVolume(16_383)).systemMessage!
+
+let setup = SMFTrack(events: [.sysEx(0, SMFSysExMessage(for: volume))]
                              + SMFEvent.midiEvents(for: bendRange, at: 0))
 ```
 
