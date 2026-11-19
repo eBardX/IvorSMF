@@ -211,8 +211,8 @@ extension SMFNormalizerTests {
         let tempo = SMFTempo(uintValue: 500_000)!                   // swiftlint:disable:this force_unwrapping
         let timeSig = SMFTimeSignature(numerator: 4,
                                        denominator: 2,
-                                       clockRate: 24,
-                                       beatRate: 8)!                // swiftlint:disable:this force_unwrapping
+                                       clocksPerClick: 24,
+                                       thirtySecondsPerQuarter: 8)!                // swiftlint:disable:this force_unwrapping
         let track0 = SMFTrack(events: [.meta(t0, .endOfTrack)])
         let track1 = SMFTrack(events: [.meta(t480, .tempo(tempo)),
                                        .meta(t480, .timeSignature(timeSig)),
@@ -259,8 +259,8 @@ extension SMFNormalizerTests {
         let t0 = SMFEventTime(uintValue: 0)!                        // swiftlint:disable:this force_unwrapping
         let timeSig = SMFTimeSignature(numerator: 4,
                                        denominator: 2,
-                                       clockRate: 24,
-                                       beatRate: 8)!                // swiftlint:disable:this force_unwrapping
+                                       clocksPerClick: 24,
+                                       thirtySecondsPerQuarter: 8)!                // swiftlint:disable:this force_unwrapping
         let track0 = SMFTrack(events: [.meta(t0, .endOfTrack)])
         let track1 = SMFTrack(events: [.meta(t0, .timeSignature(timeSig)),
                                        .meta(t0, .endOfTrack)])

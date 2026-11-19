@@ -557,8 +557,8 @@ extension SMFMetaMessageTests {
                                subframe: 0)!                // swiftlint:disable:this force_unwrapping
         let timeSig = SMFTimeSignature(numerator: 4,
                                        denominator: 2,
-                                       clockRate: 24,
-                                       beatRate: 8)!   // swiftlint:disable:this force_unwrapping
+                                       clocksPerClick: 24,
+                                       thirtySecondsPerQuarter: 8)!   // swiftlint:disable:this force_unwrapping
 
         #expect(SMFMetaMessage.copyright(text).typeByte == 0x02)
         #expect(SMFMetaMessage.cuePoint(text).typeByte == 0x07)

@@ -12,39 +12,38 @@ public struct SMFTimeSignature {
     /// Creates a new `SMFTimeSignature` instance with the provided values,
     /// or `nil` if any value is out of range.
     ///
-    /// - Parameter numerator:      The number of beats per measure.
-    ///                             Must be in the range 1–255.
-    /// - Parameter denominator:    The beat unit as a power of two
-    ///                             (e.g., 2 = quarter note, 3 = eighth
-    ///                             note). Must be in the range 0–255.
-    /// - Parameter clockRate:      The number of MIDI clocks per metronome
-    ///                             click. Must be in the range 1–255.
-    /// - Parameter beatRate:       The number of notated 32nd notes per
-    ///                             MIDI quarter note (usually 8). Must be
-    ///                             in the range 1–255.
+    /// - Parameter numerator:                  The number of beats per measure.
+    ///                                         Must be in the range 1–255.
+    /// - Parameter denominator:                The beat unit as a power of two
+    ///                                         (e.g., 2 = quarter note, 3 =
+    ///                                         eighth note). Must be in the range
+    ///                                         0–255.
+    /// - Parameter clocksPerClick:             The number of MIDI clocks per
+    ///                                         metronome click. Must be in the
+    ///                                         range 1–255.
+    /// - Parameter thirtySecondsPerQuarter:    The number of notated 32nd notes
+    ///                                         per MIDI quarter note (usually 8).
+    ///                                         Must be in the range 1–255.
     public init?(numerator: UInt,
                  denominator: UInt,
-                 clockRate: UInt,
-                 beatRate: UInt) {
+                 clocksPerClick: UInt,
+                 thirtySecondsPerQuarter: UInt) {
         guard (1...255).contains(numerator),
               (0...255).contains(denominator),
-              (1...255).contains(clockRate),
-              (1...255).contains(beatRate)
+              (1...255).contains(clocksPerClick),
+              (1...255).contains(thirtySecondsPerQuarter)
         else { return nil }
 
-        self.beatRate = beatRate
-        self.clockRate = clockRate
+        self.clocksPerClick = clocksPerClick
         self.denominator = denominator
         self.numerator = numerator
+        self.thirtySecondsPerQuarter = thirtySecondsPerQuarter
     }
 
     // MARK: Public Instance Properties
 
-    /// The number of notated 32nd notes per MIDI quarter note (usually 8).
-    public let beatRate: UInt
-
     /// The number of MIDI clocks per metronome click.
-    public let clockRate: UInt
+    public let clocksPerClick: UInt
 
     /// The beat unit expressed as a power of two (e.g., 2 = quarter note,
     /// 3 = eighth note).
@@ -52,6 +51,9 @@ public struct SMFTimeSignature {
 
     /// The number of beats per measure.
     public let numerator: UInt
+
+    /// The number of notated 32nd notes per MIDI quarter note (usually 8).
+    public let thirtySecondsPerQuarter: UInt
 }
 
 // MARK: -
@@ -65,8 +67,8 @@ extension SMFTimeSignature {
     /// MIDI quarter note (RP-001 p.5).
     public static let `default` = Self(numerator: 4,
                                        denominator: 2,
-                                       clockRate: 24,
-                                       beatRate: 8).require()
+                                       clocksPerClick: 24,
+                                       thirtySecondsPerQuarter: 8).require()
 }
 
 // MARK: - Equatable
@@ -98,8 +100,8 @@ extension SMFTimeSignature: MIDIBytesConvertible {
 
         self.init(numerator: UInt(bytesValue[0]),
                   denominator: UInt(bytesValue[1]),
-                  clockRate: UInt(bytesValue[2]),
-                  beatRate: UInt(bytesValue[3]))
+                  clocksPerClick: UInt(bytesValue[2]),
+                  thirtySecondsPerQuarter: UInt(bytesValue[3]))
     }
 
     // MARK: Public Instance Properties
@@ -112,8 +114,8 @@ extension SMFTimeSignature: MIDIBytesConvertible {
     public var bytesValue: [UInt8]? {
         guard let byte0Value = UInt8(exactly: numerator),
               let byte1Value = UInt8(exactly: denominator),
-              let byte2Value = UInt8(exactly: clockRate),
-              let byte3Value = UInt8(exactly: beatRate)
+              let byte2Value = UInt8(exactly: clocksPerClick),
+              let byte3Value = UInt8(exactly: thirtySecondsPerQuarter)
         else { return nil }
 
         return [byte0Value, byte1Value, byte2Value, byte3Value]

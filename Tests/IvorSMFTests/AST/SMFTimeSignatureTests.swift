@@ -13,8 +13,8 @@ extension SMFTimeSignatureTests {
     func bytesValue() {
         let timeSig = SMFTimeSignature(numerator: 4,
                                        denominator: 2,
-                                       clockRate: 24,
-                                       beatRate: 8)
+                                       clocksPerClick: 24,
+                                       thirtySecondsPerQuarter: 8)
 
         #expect(timeSig?.bytesValue == [0x04, 0x02, 0x18, 0x08])
     }
@@ -28,16 +28,28 @@ extension SMFTimeSignatureTests {
 
     @Test
     func equality() {
-        let timeSig1 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
-        let timeSig2 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
+        let timeSig1 = SMFTimeSignature(numerator: 4,
+                                        denominator: 2,
+                                        clocksPerClick: 24,
+                                        thirtySecondsPerQuarter: 8)!  // swiftlint:disable:this force_unwrapping
+        let timeSig2 = SMFTimeSignature(numerator: 4,
+                                        denominator: 2,
+                                        clocksPerClick: 24,
+                                        thirtySecondsPerQuarter: 8)!  // swiftlint:disable:this force_unwrapping
 
         #expect(timeSig1 == timeSig2)
     }
 
     @Test
     func hashable() {
-        let timeSig1 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
-        let timeSig2 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
+        let timeSig1 = SMFTimeSignature(numerator: 4,
+                                        denominator: 2,
+                                        clocksPerClick: 24,
+                                        thirtySecondsPerQuarter: 8)!  // swiftlint:disable:this force_unwrapping
+        let timeSig2 = SMFTimeSignature(numerator: 4,
+                                        denominator: 2,
+                                        clocksPerClick: 24,
+                                        thirtySecondsPerQuarter: 8)!  // swiftlint:disable:this force_unwrapping
         let set: Set<SMFTimeSignature> = [timeSig1, timeSig2]
 
         #expect(set.count == 1)
@@ -45,8 +57,14 @@ extension SMFTimeSignatureTests {
 
     @Test
     func inequality_differentNumerator() {
-        let timeSig1 = SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
-        let timeSig2 = SMFTimeSignature(numerator: 3, denominator: 2, clockRate: 24, beatRate: 8)!  // swiftlint:disable:this force_unwrapping
+        let timeSig1 = SMFTimeSignature(numerator: 4,
+                                        denominator: 2,
+                                        clocksPerClick: 24,
+                                        thirtySecondsPerQuarter: 8)!  // swiftlint:disable:this force_unwrapping
+        let timeSig2 = SMFTimeSignature(numerator: 3,
+                                        denominator: 2,
+                                        clocksPerClick: 24,
+                                        thirtySecondsPerQuarter: 8)!  // swiftlint:disable:this force_unwrapping
 
         #expect(timeSig1 != timeSig2)
     }
@@ -58,8 +76,8 @@ extension SMFTimeSignatureTests {
         #expect(timeSig != nil)
         #expect(timeSig?.numerator == 3)
         #expect(timeSig?.denominator == 3)
-        #expect(timeSig?.clockRate == 24)
-        #expect(timeSig?.beatRate == 8)
+        #expect(timeSig?.clocksPerClick == 24)
+        #expect(timeSig?.thirtySecondsPerQuarter == 8)
     }
 
     @Test
@@ -70,28 +88,28 @@ extension SMFTimeSignatureTests {
     }
 
     @Test
-    func init_invalid_beatRate() {
-        #expect(SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 24, beatRate: 0) == nil)
+    func init_invalid_thirtySecondsPerQuarter() {
+        #expect(SMFTimeSignature(numerator: 4, denominator: 2, clocksPerClick: 24, thirtySecondsPerQuarter: 0) == nil)
     }
 
     @Test
-    func init_invalid_clockRate() {
-        #expect(SMFTimeSignature(numerator: 4, denominator: 2, clockRate: 0, beatRate: 8) == nil)
+    func init_invalid_clocksPerClick() {
+        #expect(SMFTimeSignature(numerator: 4, denominator: 2, clocksPerClick: 0, thirtySecondsPerQuarter: 8) == nil)
     }
 
     @Test
     func init_invalid_denominator() {
-        #expect(SMFTimeSignature(numerator: 4, denominator: 256, clockRate: 24, beatRate: 8) == nil)
+        #expect(SMFTimeSignature(numerator: 4, denominator: 256, clocksPerClick: 24, thirtySecondsPerQuarter: 8) == nil)
     }
 
     @Test
     func init_invalid_numerator() {
-        #expect(SMFTimeSignature(numerator: 0, denominator: 2, clockRate: 24, beatRate: 8) == nil)
+        #expect(SMFTimeSignature(numerator: 0, denominator: 2, clocksPerClick: 24, thirtySecondsPerQuarter: 8) == nil)
     }
 
     @Test
     func init_valid_denominator_one() {
-        let timeSig = SMFTimeSignature(numerator: 4, denominator: 1, clockRate: 24, beatRate: 8)
+        let timeSig = SMFTimeSignature(numerator: 4, denominator: 1, clocksPerClick: 24, thirtySecondsPerQuarter: 8)
 
         #expect(timeSig != nil)
         #expect(timeSig?.denominator == 1)
@@ -99,7 +117,7 @@ extension SMFTimeSignatureTests {
 
     @Test
     func init_valid_denominator_zero() {
-        let timeSig = SMFTimeSignature(numerator: 4, denominator: 0, clockRate: 24, beatRate: 8)
+        let timeSig = SMFTimeSignature(numerator: 4, denominator: 0, clocksPerClick: 24, thirtySecondsPerQuarter: 8)
 
         #expect(timeSig != nil)
         #expect(timeSig?.denominator == 0)
@@ -109,22 +127,22 @@ extension SMFTimeSignatureTests {
     func init_validValues() {
         let timeSig = SMFTimeSignature(numerator: 4,
                                        denominator: 2,
-                                       clockRate: 24,
-                                       beatRate: 8)
+                                       clocksPerClick: 24,
+                                       thirtySecondsPerQuarter: 8)
 
         #expect(timeSig != nil)
         #expect(timeSig?.numerator == 4)
         #expect(timeSig?.denominator == 2)
-        #expect(timeSig?.clockRate == 24)
-        #expect(timeSig?.beatRate == 8)
+        #expect(timeSig?.clocksPerClick == 24)
+        #expect(timeSig?.thirtySecondsPerQuarter == 8)
     }
 
     @Test
     func roundTrip() {
         let timeSig = SMFTimeSignature(numerator: 6,
                                        denominator: 3,
-                                       clockRate: 36,
-                                       beatRate: 8)
+                                       clocksPerClick: 36,
+                                       thirtySecondsPerQuarter: 8)
         let bytes = timeSig?.bytesValue
 
         #expect(bytes != nil)
@@ -133,7 +151,7 @@ extension SMFTimeSignatureTests {
 
         #expect(roundTripped?.numerator == 6)
         #expect(roundTripped?.denominator == 3)
-        #expect(roundTripped?.clockRate == 36)
-        #expect(roundTripped?.beatRate == 8)
+        #expect(roundTripped?.clocksPerClick == 36)
+        #expect(roundTripped?.thirtySecondsPerQuarter == 8)
     }
 }
